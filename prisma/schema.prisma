@@ -1,0 +1,202 @@
+// Schéma de données — ClubSport
+// Domaine : gestion d'un club sportif multi-sites (adhésions, séances, présence)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Deux niveaux d'autorisation minimum exigés par le brief.
+/// COACH est un rôle intermédiaire : il anime des séances sans administrer le club.
+enum Role {
+  MEMBER
+  COACH
+  ADMIN
+}
+
+/// Cycle de vie d'une adhésion. Seule une adhésion ACTIVE autorise l'inscription.
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+/// Cycle de vie d'une inscription à une séance : c'est le flux métier principal.
+/// BOOKED -> CONFIRMED -> ATTENDED (ou NO_SHOW), ou CANCELLED à tout moment avant.
+enum BookingStatus {
+  BOOKED
+  CONFIRMED
+  ATTENDED
+  NO_SHOW
+  CANCELLED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CANCELLED
+  DONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role     @default(MEMBER)
+
+  /// Tant que false, le middleware force le passage par /onboarding.
+  onboarded    Boolean  @default(false)
+
+  phone        String?
+  birthDate    DateTime?
+
+  /// Préférences modifiables depuis /settings (données persistantes exigées).
+  emailOptIn        Boolean @default(true)
+  reminderOptIn     Boolean @default(true)
+  preferredSiteId   String?
+  preferredSite     Site?   @relation("PreferredSite", fields: [preferredSiteId], references: [id], onDelete: SetNull)
+
+  memberships  Membership[]
+  bookings     Booking[]
+  /// Séances animées lorsque l'utilisateur est COACH.
+  coachedSessions Session[] @relation("SessionCoach")
+  sessions     AuthSession[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+}
+
+/// Session d'authentification persistée : permet la déconnexion côté serveur
+/// (révocation réelle) plutôt qu'un simple JWT non révocable.
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Un site = un lieu physique du club. Porte les coordonnées GPS :
+/// c'est la donnée qui alimentera la géolocalisation de la future app mobile.
+model Site {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  address   String
+  city      String
+  postalCode String
+  latitude  Float
+  longitude Float
+  /// Identifiant de la borne NFC installée à l'entrée du site.
+  /// La future app React Native lira ce tag pour pointer la présence.
+  nfcTagId  String? @unique
+
+  sessions       Session[]
+  preferredBy    User[]    @relation("PreferredSite")
+  activities     Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Type d'activité proposée (yoga, escalade, natation...).
+model Activity {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String
+  /// Durée standard en minutes, sert de valeur par défaut à la création de séance.
+  durationMin Int     @default(60)
+  /// Niveau requis, comparé au niveau déclaré par le membre à l'onboarding.
+  level       String  @default("all")
+
+  siteId   String
+  site     Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId])
+}
+
+/// Une séance datée : c'est la ressource que le membre réserve.
+model Session {
+  id         String        @id @default(cuid())
+  activityId String
+  activity   Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  siteId     String
+  site       Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  coachId    String?
+  coach      User?         @relation("SessionCoach", fields: [coachId], references: [id], onDelete: SetNull)
+
+  startsAt   DateTime
+  endsAt     DateTime
+  /// Nombre de places ; la réservation vérifie la capacité côté serveur.
+  capacity   Int           @default(12)
+  status     SessionStatus @default(SCHEDULED)
+  notes      String?
+
+  bookings   Booking[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([startsAt])
+  @@index([siteId, startsAt])
+  @@index([activityId])
+}
+
+/// Inscription d'un membre à une séance. Contrainte d'unicité : pas de double
+/// inscription à la même séance.
+model Booking {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status    BookingStatus @default(BOOKED)
+
+  /// Renseigné au pointage. En web c'est l'admin/coach qui valide ;
+  /// dans la future app mobile ce sera le scan du tag NFC du site.
+  checkedInAt DateTime?
+  /// Trace la provenance du pointage : "web" aujourd'hui, "nfc" demain.
+  checkInMethod String?
+
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, sessionId])
+  @@index([userId, createdAt])
+  @@index([sessionId])
+  @@index([status])
+}
+
+/// Adhésion annuelle au club : conditionne le droit de réserver.
+model Membership {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String           @default("standard")
+  status    MembershipStatus @default(PENDING)
+  startsAt  DateTime         @default(now())
+  endsAt    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

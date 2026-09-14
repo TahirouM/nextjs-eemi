@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/*
+  Design system ClubSport.
+  Palette sobre "salle de sport urbaine" : ardoise profonde + un accent lime
+  énergique, réservé aux actions et aux états actifs pour qu'il garde du poids.
+*/
+:root {
+  --background: #f7f7f5;
+  --surface: #ffffff;
+  --surface-muted: #f0f0ee;
+  --foreground: #16181d;
+  --muted: #6b7280;
+  --border: #e3e3df;
+  --accent: #4d7c0f;
+  --accent-foreground: #ffffff;
+  --accent-soft: #ecfccb;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --warning: #92400e;
+  --warning-soft: #fef3c7;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d0f12;
+    --surface: #16181d;
+    --surface-muted: #1e2127;
+    --foreground: #f2f3f5;
+    --muted: #9aa1ac;
+    --border: #2a2e36;
+    --accent: #a3e635;
+    --accent-foreground: #14210a;
+    --accent-soft: #1f2d10;
+    --danger: #fca5a5;
+    --danger-soft: #2a1414;
+    --warning: #fcd34d;
+    --warning-soft: #2a2110;
+    --success: #86efac;
+    --success-soft: #10250f;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Accessibilité : un focus toujours visible, exigence du brief. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
