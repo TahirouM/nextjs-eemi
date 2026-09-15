@@ -333,7 +333,83 @@ chaque état est aussi nommé par un mot (« Complet », « Suspendue »).
 
 ---
 
-## 11. Internationalisation (FR / EN)
+## 11. Déploiement sur Vercel
+
+Le projet est **préparé** pour Vercel. Trois étapes restent à faire, car elles
+demandent des comptes personnels.
+
+### 1. Une base PostgreSQL managée
+
+`localhost:5440` n'existe pas sur Vercel. Créez une base gratuite sur
+[Neon](https://neon.tech) ou [Supabase](https://supabase.com) et relevez **deux**
+URLs :
+
+| Variable | Rôle |
+|---|---|
+| `DATABASE_URL` | URL du **pooler** — utilisée par l'application |
+| `DIRECT_URL` | URL **directe** — utilisée par `prisma migrate` |
+
+Les deux sont nécessaires : les poolers en mode transaction ne gèrent pas les
+verrous de migration. Le schéma déclare déjà `directUrl` pour cette raison.
+
+### 2. Variables d'environnement sur Vercel
+
+À définir dans *Project Settings → Environment Variables* :
+
+```
+DATABASE_URL         = <URL pooler de la base managée>
+DIRECT_URL           = <URL directe de la base managée>
+AUTH_SECRET          = <32 caractères aléatoires, voir ci-dessous>
+NEXT_PUBLIC_SITE_URL = https://<votre-projet>.vercel.app
+```
+
+Générez la clé de session — **ne réutilisez pas celle de développement** :
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 3. Déploiement
+
+```bash
+# dépôt GitHub (le projet n'a pas encore de remote)
+gh repo create clubsport --private --source=. --push
+
+# puis, sur vercel.com : « Add New Project » → importer le dépôt
+# ou en ligne de commande :
+vercel login
+vercel --prod
+```
+
+Les migrations s'appliquent automatiquement : le script `vercel-build` exécute
+`prisma generate && prisma migrate deploy && next build`.
+
+### 4. Comptes de démonstration en production
+
+Le seed **n'est pas rejoué automatiquement** — il supprime tout avant d'insérer,
+ce qui effacerait les données réelles à chaque déploiement. Lancez-le une fois,
+depuis votre machine, contre la base distante :
+
+```bash
+# fichier local, jamais versionné (couvert par .gitignore)
+echo 'DATABASE_URL="<URL pooler>"'  > .env.production
+echo 'DIRECT_URL="<URL directe>"'  >> .env.production
+
+npm run db:seed:prod
+```
+
+### Ce qui est déjà configuré
+
+- `vercel.json` — framework et région `cdg1` (Paris : la base et les
+  utilisateurs sont en France, cela évite un aller-retour transatlantique) ;
+- `postinstall: prisma generate` — Vercel met `node_modules` en cache, sans
+  cela le client Prisma ne serait pas régénéré après un changement de schéma ;
+- `vercel-build` — applique les migrations avant le build ;
+- `.env.example` — documente les quatre variables attendues.
+
+---
+
+## 12. Internationalisation (FR / EN)
 
 L'application est disponible en **français** et en **anglais**, avec un
 sélecteur présent dans l'en-tête de toutes les pages.
@@ -381,7 +457,7 @@ pour ce projet. Seule l'interface est bilingue.
 
 ---
 
-## 12. Direction artistique
+## 13. Direction artistique
 
 **Référence :** le planning imprimé punaisé dans le hall d'un gymnase, et les
 lignes peintes au sol d'un terrain. Trois conséquences concrètes :
@@ -440,7 +516,7 @@ horizontal de 360 px à 1440 px.
 
 ---
 
-## 13. Limites connues
+## 14. Limites connues
 
 - **Pas de liste d'attente** quand une séance est complète : le bouton est
   simplement désactivé.
@@ -458,13 +534,14 @@ horizontal de 360 px à 1440 px.
   exécution. À ne pas lancer sur une base contenant des données à conserver.
 - **Le contenu de la base n'est pas traduit** : les noms de disciplines et de
   salles restent en français en anglais (cf. section 11).
-- **Déploiement non effectué** : le projet tourne en local avec PostgreSQL en
-  Docker. Pour Vercel, il faudrait une base managée (Neon/Supabase) et définir
-  `DATABASE_URL`, `AUTH_SECRET` et `NEXT_PUBLIC_SITE_URL` dans le dashboard.
+- **Déploiement préparé mais non effectué** : la configuration Vercel est en
+  place (`vercel.json`, scripts Prisma, `directUrl`, variables documentées),
+  mais la mise en ligne demande un compte Vercel et une base managée. La
+  marche à suivre complète est en section 11.
 
 ---
 
-## 14. Usage de l'IA
+## 15. Usage de l'IA
 
 **Outils utilisés.** Claude (Claude Code) en assistant de développement, sur
 l'ensemble du projet : cadrage, génération de code, débogage.

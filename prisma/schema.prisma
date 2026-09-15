@@ -7,7 +7,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Connexion applicative : passe par le pooler en production (Neon, Supabase).
   url      = env("DATABASE_URL")
+  // Connexion directe, sans pooler : indispensable pour `prisma migrate deploy`.
+  // Les poolers en mode transaction ne supportent pas les verrous de migration.
+  // En local, les deux pointent vers la même base.
+  directUrl = env("DIRECT_URL")
 }
 
 /// Deux niveaux d'autorisation minimum exigés par le brief.
