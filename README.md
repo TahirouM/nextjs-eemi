@@ -393,6 +393,30 @@ lignes peintes au sol d'un terrain. Trois conséquences concrètes :
 - un **seul accent chaud** (ocre vernis de parquet, `#a8560f`) réservé à
   l'action, jamais utilisé en décoration.
 
+**Thème clair « verre ».** Les surfaces ne sont pas des aplats opaques mais des
+plaques translucides posées sur un fond légèrement teinté (deux halos radiaux
+très diffus, l'un froid, l'autre chaud). Trois ingrédients indissociables, gérés
+par la classe utilitaire `.glass` :
+
+1. une couleur de surface semi-transparente (`rgb(255 255 255 / 0.62)`) ;
+2. un flou d'arrière-plan (`backdrop-filter: blur(16px) saturate(1.4)`) ;
+3. une bordure claire et une ombre douce, qui donnent l'épaisseur.
+
+Enlever l'un des trois casse l'effet : sans fond teinté le flou n'a rien à
+flouter, sans flou la surface paraît simplement grise.
+
+Points d'attention :
+
+- **Repli** : `@supports not (backdrop-filter: ...)` rend la surface opaque
+  quand le navigateur ne sait pas flouter, sinon le texte deviendrait illisible.
+- **Coût** : `backdrop-filter` est la partie chère du rendu. Il est réservé aux
+  surfaces (en-têtes, panneaux) et n'est jamais appliqué aux éléments répétés
+  d'une longue liste.
+- **Contraste** : vérifié au ratio WCAG — encre sur fond 15,2:1, texte secondaire
+  5,4:1, accent 5,3:1. Tous au-dessus du minimum AA de 4,5:1.
+- **Le back-office reste opaque** (bandeau d'encre pleine largeur) : la
+  distinction visuelle entre espace membre et administration prime sur l'effet.
+
 **Typographie.** Une seule famille, *Archivo*, exploitée sur son **axe de
 largeur** (`wdth`) : titres en large, texte courant en normal. Le lettrage
 large évoque les typographies peintes des gymnases et des dossards. *IBM Plex

@@ -111,7 +111,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             Le planning : rail vertical d'heures, séances accrochées dessus.
             Reprise directe d'un planning mural de gymnase.
           */}
-          <div className="lg:pt-2">
+          {/* Plaque de verre : le planning est l'élément principal du héros,
+              il mérite d'être posé en avant du fond plutôt que fondu dedans. */}
+          <div className="glass rounded-xl border border-rule p-5 lg:mt-2">
             <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
               <h2 className="font-display text-sm font-semibold tracking-wide">
                 {t("nextSessions")}
@@ -171,7 +173,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       </section>
 
       {/* ---------------------------------------------------- Disciplines --- */}
-      <section className="border-t border-rule bg-surface">
+      <section className="border-y border-rule bg-surface-solid/45 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="flex flex-wrap items-baseline justify-between gap-4">
             <h2 className="font-display text-2xl font-bold tracking-tight">
@@ -246,7 +248,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       </section>
 
       {/* --------------------------------------------------------- Salles --- */}
-      <section className="border-t border-rule bg-surface">
+      <section className="border-y border-rule bg-surface-solid/45 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <h2 className="font-display text-2xl font-bold tracking-tight">
             {t("whereTitle")}

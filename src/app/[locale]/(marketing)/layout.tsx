@@ -44,7 +44,7 @@ export default async function MarketingLayout({
         {t("skipToContent")}
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-rule bg-paper/90 backdrop-blur">
+      <header className="glass sticky top-0 z-40 border-b border-rule">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3.5">
           <Link href="/" className="font-display text-lg font-bold tracking-tight">
             ClubSport
@@ -101,7 +101,7 @@ export default async function MarketingLayout({
         {children}
       </main>
 
-      <footer className="border-t-2 border-ink bg-surface">
+      <footer className="glass mt-8 border-t border-rule">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-10 text-sm sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="font-display font-bold">ClubSport</p>

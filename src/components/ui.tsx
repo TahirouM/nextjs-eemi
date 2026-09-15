@@ -31,8 +31,9 @@ export function Panel({
   return (
     <div
       className={cx(
-        "rounded-sm border border-rule p-5",
-        sunk ? "bg-surface-sunk" : "bg-surface",
+        "rounded-xl border border-rule p-5",
+        // `glass` porte le flou + l'ombre ; le fond translucide vient du jeton.
+        sunk ? "bg-surface-sunk" : "glass",
         className,
       )}
       {...props}
@@ -69,7 +70,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-accent text-accent-ink hover:bg-accent-hover disabled:opacity-45",
   secondary:
-    "border border-rule-strong bg-surface text-ink hover:bg-surface-sunk disabled:opacity-45",
+    "border border-rule-strong bg-surface-solid/60 text-ink backdrop-blur-sm hover:bg-surface-solid/90 disabled:opacity-45",
   quiet: "text-ink-soft hover:bg-surface-sunk hover:text-ink disabled:opacity-45",
   danger:
     "border border-stop/45 bg-stop-wash text-stop hover:border-stop disabled:opacity-45",
@@ -81,7 +82,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
   qu'on ne voulait pas animer.
 */
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed";
 
 export function Button({
   variant = "primary",
@@ -190,7 +191,7 @@ export function Field({
 }
 
 const controlBase =
-  "w-full rounded-sm border border-rule-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors duration-150 hover:border-ink-soft focus:border-accent";
+  "w-full rounded-lg border border-rule-strong bg-surface-solid/70 px-3 py-2 text-sm text-ink outline-none transition-colors duration-150 hover:border-ink-soft focus:border-accent focus:bg-surface-solid";
 
 export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
   return <input className={cx(controlBase, className)} {...props} />;
@@ -249,7 +250,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-sm border border-dashed border-rule-strong bg-surface-sunk px-6 py-12 text-center">
+    <div className="rounded-xl border border-dashed border-rule-strong bg-surface-sunk px-6 py-12 text-center">
       <p className="font-display font-semibold">{title}</p>
       <p className="mx-auto mt-1.5 max-w-sm text-pretty text-sm text-ink-soft">
         {description}
@@ -269,7 +270,7 @@ export function ErrorState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-sm border border-stop/35 bg-stop-wash px-6 py-8 text-center">
+    <div className="rounded-xl border border-stop/35 bg-stop-wash px-6 py-8 text-center">
       <p className="font-display font-semibold text-stop">{title}</p>
       <p className="mx-auto mt-1.5 max-w-md text-pretty text-sm text-stop/90">
         {description}
@@ -282,7 +283,7 @@ export function ErrorState({
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cx("animate-pulse rounded-sm bg-surface-sunk", className)}
+      className={cx("animate-pulse rounded-lg bg-surface-sunk", className)}
       aria-hidden="true"
     />
   );
@@ -331,7 +332,7 @@ export function Alert({
       role="status"
       aria-live="polite"
       className={cx(
-        "rounded-sm border px-3 py-2 text-sm",
+        "rounded-lg border px-3 py-2 text-sm",
         tone === "success"
           ? "border-go/30 bg-go-wash text-go"
           : "border-stop/30 bg-stop-wash text-stop",

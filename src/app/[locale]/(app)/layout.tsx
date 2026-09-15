@@ -38,7 +38,7 @@ export default async function AppLayout({
         {tNav("skipToContent")}
       </a>
 
-      <header className="border-b border-rule bg-surface">
+      <header className="glass sticky top-0 z-40 border-b border-rule">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link
             href="/dashboard"

@@ -16,32 +16,57 @@
 :root {
   color-scheme: light;
 
-  /* Papier et encre */
-  --paper: #fbfaf7; /* blanc craie légèrement chaud */
-  --surface: #ffffff;
-  --surface-sunk: #f2efe9; /* creux : entêtes de tableau, rails */
-  --ink: #1a1d21; /* encre, pas un noir pur */
-  --ink-soft: #5c6169;
-  --rule: #ded8cd; /* filet imprimé */
-  --rule-strong: #c3bcae;
+  /*
+    Thème clair « verre ».
+
+    Les surfaces ne sont plus opaques : ce sont des plaques translucides posées
+    sur un fond légèrement teinté, qui transparaît à travers. Trois ingrédients
+    indissociables — enlever l'un des trois casse l'effet :
+      1. une couleur de surface semi-transparente (alpha 0.55 à 0.75) ;
+      2. un flou d'arrière-plan (`backdrop-filter`) ;
+      3. une bordure claire + une ombre douce, qui donnent l'épaisseur.
+
+    Les valeurs opaques restent définies pour les cas où la transparence n'a pas
+    de sens (barre d'administration, champs de formulaire).
+  */
+
+  /* Fond : dégradé très doux, c'est lui qu'on aperçoit derrière le verre */
+  --paper: #f4f6fa;
+  --paper-tint-a: #e8eef7; /* halo froid, en haut à gauche */
+  --paper-tint-b: #faf3ec; /* halo chaud, en bas à droite */
+
+  /* Plaques de verre */
+  --surface: rgb(255 255 255 / 0.62);
+  --surface-solid: #ffffff; /* quand l'opacité est nécessaire */
+  --surface-sunk: rgb(233 238 246 / 0.55);
+  --glass-blur: 16px;
+  --glass-shadow: 0 1px 2px rgb(24 39 62 / 0.04), 0 8px 24px -12px rgb(24 39 62 / 0.15);
+
+  /* Encre : un gris-bleu profond, plus juste que le noir sur fond froid */
+  --ink: #16202e;
+  --ink-soft: #5a6678;
+
+  /* Filets : translucides eux aussi, sinon ils écrasent le verre */
+  --rule: rgb(22 32 46 / 0.10);
+  --rule-strong: rgb(22 32 46 / 0.20);
 
   /* Accent : vernis de parquet / laiton */
   --accent: #a8560f;
   --accent-hover: #8e4709;
   --accent-ink: #fffdf9;
-  --accent-wash: #fbeee0;
+  --accent-wash: rgb(240 178 110 / 0.20);
 
   /* Bleu terrain, pour l'information et les liens secondaires */
   --court: #1f4e79;
-  --court-wash: #e6eef6;
+  --court-wash: rgb(31 78 121 / 0.12);
 
   /* États sémantiques */
-  --go: #1d6b45;
-  --go-wash: #e2f2e9;
+  --go: #1a6b45;
+  --go-wash: rgb(26 107 69 / 0.13);
   --warn: #8a5a08;
-  --warn-wash: #fbf0d9;
+  --warn-wash: rgb(190 140 30 / 0.18);
   --stop: #a32b21;
-  --stop-wash: #fbe8e6;
+  --stop-wash: rgb(163 43 33 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,13 +74,18 @@
     color-scheme: dark;
 
     /* Gymnase le soir : parquet sombre, pas de noir d'encre */
+    --paper-tint-a: #161d29;
+    --paper-tint-b: #1e1a16;
+    --surface-solid: #1b1e23;
+    --glass-blur: 18px;
+    --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.55);
     --paper: #14161a;
-    --surface: #1b1e23;
-    --surface-sunk: #23272e;
+    --surface: rgb(32 37 45 / 0.62);
+    --surface-sunk: rgb(24 28 35 / 0.55);
     --ink: #f0ede7;
     --ink-soft: #a3a8b0;
-    --rule: #333941;
-    --rule-strong: #4a515b;
+    --rule: rgb(255 255 255 / 0.10);
+    --rule-strong: rgb(255 255 255 / 0.20);
 
     --accent: #e2913f;
     --accent-hover: #f0a458;
@@ -79,12 +109,17 @@
   color-scheme: dark;
 
   --paper: #14161a;
-  --surface: #1b1e23;
-  --surface-sunk: #23272e;
+  --paper-tint-a: #161d29;
+  --paper-tint-b: #1e1a16;
+  --surface-solid: #1b1e23;
+  --glass-blur: 18px;
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.55);
+  --surface: rgb(32 37 45 / 0.62);
+  --surface-sunk: rgb(24 28 35 / 0.55);
   --ink: #f0ede7;
   --ink-soft: #a3a8b0;
-  --rule: #333941;
-  --rule-strong: #4a515b;
+  --rule: rgb(255 255 255 / 0.10);
+  --rule-strong: rgb(255 255 255 / 0.20);
 
   --accent: #e2913f;
   --accent-hover: #f0a458;
@@ -105,6 +140,7 @@
 @theme inline {
   --color-paper: var(--paper);
   --color-surface: var(--surface);
+  --color-surface-solid: var(--surface-solid);
   --color-surface-sunk: var(--surface-sunk);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -134,10 +170,46 @@ html {
 }
 
 body {
-  background: var(--paper);
   color: var(--ink);
   /* Évite le délai de 300 ms au double-tap sur mobile. */
   touch-action: manipulation;
+
+  /*
+    Fond du thème verre : deux halos très diffus sur une base unie. C'est ce
+    qui transparaît à travers les plaques translucides — sans lui, le flou
+    n'aurait rien à flouter et les surfaces paraîtraient simplement grises.
+
+    `background-attachment: fixed` garde les halos immobiles au défilement :
+    les plaques glissent devant, l'arrière-plan ne bouge pas.
+  */
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, var(--paper-tint-a), transparent 60%),
+    radial-gradient(50rem 36rem at 105% 15%, var(--paper-tint-b), transparent 58%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/*
+  Plaque de verre. Le flou d'arrière-plan est la partie coûteuse : on le
+  réserve aux surfaces, jamais aux éléments répétés dans une longue liste.
+*/
+.glass {
+  background-color: var(--surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: var(--glass-shadow);
+}
+
+/*
+  `backdrop-filter` n'est pas universellement supporté (anciens Firefox avec
+  l'option désactivée). Dans ce cas la surface doit redevenir opaque, sinon le
+  texte se lirait par-dessus le fond.
+*/
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background-color: var(--surface-solid);
+  }
 }
 
 /*
