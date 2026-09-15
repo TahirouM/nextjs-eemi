@@ -6,6 +6,12 @@ administrateurs pilotent le planning et les adhésions.
 
 Projet M2 EEMI 2026 — Next.js 16.3.5 (App Router), React 19, Prisma, PostgreSQL.
 
+| | |
+|---|---|
+| **Application en ligne** | https://clubsport-seven.vercel.app |
+| **Dépôt** | https://github.com/TahirouM/nextjs-eemi |
+| **Langues** | Français · English |
+
 ---
 
 ## 1. Démarrage rapide
@@ -382,13 +388,12 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### 3. Déploiement
 
 ```bash
-# dépôt GitHub (le projet n'a pas encore de remote)
-gh repo create clubsport --private --source=. --push
+# le dépôt existe déjà : https://github.com/TahirouM/nextjs-eemi
+# pour repartir de zéro sur un autre compte :
+gh repo create mon-clubsport --public --source=. --push
 
-# puis, sur vercel.com : « Add New Project » → importer le dépôt
-# ou en ligne de commande :
 vercel login
-vercel --prod
+vercel deploy --prod
 ```
 
 Les migrations s'appliquent automatiquement : le script `vercel-build` exécute
