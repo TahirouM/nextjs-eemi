@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Card } from "@/components/ui";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
@@ -12,20 +11,25 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <Card>
-      <h1 className="text-xl font-semibold tracking-tight">Rejoindre le club</h1>
-      <p className="mt-1 mb-6 text-sm text-muted">
+    <div>
+      <h1 className="font-display text-3xl font-bold tracking-tight text-balance">
+        Rejoindre le club
+      </h1>
+      <p className="mt-2 mb-7 text-ink-soft">
         Créez votre compte, puis choisissez votre salle et votre formule.
       </p>
 
       <RegisterForm />
 
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-7 border-t border-rule pt-5 text-sm text-ink-soft">
         Vous avez déjà un compte ?{" "}
-        <Link href="/login" className="font-medium text-accent">
+        <Link
+          href="/login"
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
           Se connecter
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { getActivities, getActivityBySlug } from "@/lib/queries";
-import { Badge, ButtonLink, Card, PageHeader } from "@/components/ui";
+import { Badge, ButtonLink, Panel, PageHeader } from "@/components/ui";
 import { formatDate, formatTime, levelLabel } from "@/lib/format";
 
 /**
@@ -74,7 +74,7 @@ export default async function ActivityPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
-      <Link href="/activites" className="text-sm text-muted hover:text-foreground">
+      <Link href="/activites" className="text-sm text-ink-soft hover:text-ink">
         ← Toutes les activités
       </Link>
 
@@ -92,12 +92,12 @@ export default async function ActivityPage({
           { label: "Salle", value: activity.site.name },
           { label: "Ville", value: activity.site.city },
         ].map((item) => (
-          <Card key={item.label}>
-            <p className="text-xs uppercase tracking-wide text-muted">
+          <Panel key={item.label}>
+            <p className="text-sm text-ink-soft">
               {item.label}
             </p>
             <p className="mt-1 font-semibold">{item.value}</p>
-          </Card>
+          </Panel>
         ))}
       </div>
 
@@ -107,24 +107,24 @@ export default async function ActivityPage({
         </h2>
 
         {sessions.length === 0 ? (
-          <Card>
-            <p className="text-sm text-muted">
+          <Panel>
+            <p className="text-sm text-ink-soft">
               Aucune séance programmée pour le moment. Revenez bientôt ou
               consultez les autres disciplines.
             </p>
-          </Card>
+          </Panel>
         ) : (
           <ul className="space-y-3">
             {sessions.map((session) => {
               const remaining = session.capacity - session._count.bookings;
               return (
                 <li key={session.id}>
-                  <Card className="flex flex-wrap items-center justify-between gap-4">
+                  <Panel className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <p className="font-medium capitalize">
                         {formatDate(session.startsAt)}
                       </p>
-                      <p className="text-sm text-muted">
+                      <p className="text-sm text-ink-soft">
                         {formatTime(session.startsAt)} ·{" "}
                         {session.coach
                           ? `${session.coach.firstName} ${session.coach.lastName}`
@@ -132,13 +132,13 @@ export default async function ActivityPage({
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge tone={remaining > 0 ? "success" : "danger"}>
+                      <Badge tone={remaining > 0 ? "go" : "stop"}>
                         {remaining > 0
                           ? `${remaining} place${remaining > 1 ? "s" : ""}`
                           : "Complet"}
                       </Badge>
                     </div>
-                  </Card>
+                  </Panel>
                 </li>
               );
             })}
@@ -146,11 +146,11 @@ export default async function ActivityPage({
         )}
       </section>
 
-      <Card className="mt-10 text-center">
+      <Panel className="mt-10 text-center">
         <p className="font-medium">
           La réservation est réservée aux adhérents du club.
         </p>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-ink-soft">
           Créez votre compte pour réserver votre place en ligne.
         </p>
         <div className="mt-4 flex justify-center gap-3">
@@ -159,7 +159,7 @@ export default async function ActivityPage({
             J&apos;ai déjà un compte
           </ButtonLink>
         </div>
-      </Card>
+      </Panel>
     </div>
   );
 }

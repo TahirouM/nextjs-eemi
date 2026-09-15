@@ -54,12 +54,12 @@ export const bookingStatusLabel: Record<BookingStatus, string> = {
 
 export const bookingStatusTone: Record<
   BookingStatus,
-  "neutral" | "accent" | "success" | "warning" | "danger"
+  "neutral" | "accent" | "go" | "warn" | "stop" | "court"
 > = {
   BOOKED: "accent",
   CONFIRMED: "accent",
-  ATTENDED: "success",
-  NO_SHOW: "warning",
+  ATTENDED: "go",
+  NO_SHOW: "warn",
   CANCELLED: "neutral",
 };
 
@@ -72,11 +72,11 @@ export const membershipStatusLabel: Record<MembershipStatus, string> = {
 
 export const membershipStatusTone: Record<
   MembershipStatus,
-  "neutral" | "accent" | "success" | "warning" | "danger"
+  "neutral" | "accent" | "go" | "warn" | "stop" | "court"
 > = {
-  PENDING: "warning",
-  ACTIVE: "success",
-  SUSPENDED: "danger",
+  PENDING: "warn",
+  ACTIVE: "go",
+  SUSPENDED: "stop",
   EXPIRED: "neutral",
 };
 

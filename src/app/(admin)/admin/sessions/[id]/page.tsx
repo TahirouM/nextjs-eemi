@@ -7,8 +7,8 @@ import { getAdminSessionDetail } from "@/lib/queries";
 import {
   Alert,
   Badge,
-  Card,
-  CardTitle,
+  Panel,
+  PanelTitle,
   EmptyState,
   PageHeader,
 } from "@/components/ui";
@@ -48,7 +48,7 @@ export default async function AdminSessionDetailPage({
     <>
       <Link
         href="/admin/sessions"
-        className="text-sm text-muted hover:text-foreground"
+        className="text-sm text-ink-soft hover:text-ink"
       >
         ← Retour aux séances
       </Link>
@@ -59,7 +59,7 @@ export default async function AdminSessionDetailPage({
           description={`${formatDate(session.startsAt)} · ${formatTime(session.startsAt)} – ${formatTime(session.endsAt)} · ${session.site.name}`}
           action={
             <Badge
-              tone={session.status === "CANCELLED" ? "danger" : "success"}
+              tone={session.status === "CANCELLED" ? "stop" : "go"}
             >
               {sessionStatusLabel[session.status]}
             </Badge>
@@ -77,11 +77,11 @@ export default async function AdminSessionDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card>
-            <CardTitle>
+          <Panel>
+            <PanelTitle>
               Feuille de présence ({session.bookings.length} inscrit
               {session.bookings.length > 1 ? "s" : ""})
-            </CardTitle>
+            </PanelTitle>
 
             {session.bookings.length === 0 ? (
               <EmptyState
@@ -89,7 +89,7 @@ export default async function AdminSessionDetailPage({
                 description="Personne n'a encore réservé cette séance."
               />
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-y divide-rule">
                 {session.bookings.map((booking) => (
                   <li
                     key={booking.id}
@@ -99,7 +99,7 @@ export default async function AdminSessionDetailPage({
                       <p className="truncate font-medium">
                         {booking.user.firstName} {booking.user.lastName}
                       </p>
-                      <p className="truncate text-sm text-muted">
+                      <p className="truncate text-sm text-ink-soft">
                         {booking.user.email}
                       </p>
                     </div>
@@ -118,29 +118,29 @@ export default async function AdminSessionDetailPage({
                 ))}
               </ul>
             )}
-          </Card>
+          </Panel>
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardTitle>Remplissage</CardTitle>
+          <Panel>
+            <PanelTitle>Remplissage</PanelTitle>
             <p className="text-3xl font-semibold">
               {session.bookings.length}
-              <span className="text-base font-normal text-muted">
+              <span className="text-base font-normal text-ink-soft">
                 {" "}
                 / {session.capacity}
               </span>
             </p>
             {isPast && (
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-ink-soft">
                 {attended} présence{attended > 1 ? "s" : ""} validée
                 {attended > 1 ? "s" : ""}
               </p>
             )}
 
-            <dl className="mt-5 space-y-3 border-t border-border pt-4 text-sm">
+            <dl className="mt-5 space-y-3 border-t border-rule pt-4 text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted">
+                <dt className="text-sm text-ink-soft">
                   Coach
                 </dt>
                 <dd className="mt-0.5">
@@ -150,7 +150,7 @@ export default async function AdminSessionDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted">
+                <dt className="text-sm text-ink-soft">
                   Salle
                 </dt>
                 <dd className="mt-0.5">
@@ -159,24 +159,24 @@ export default async function AdminSessionDetailPage({
               </div>
               {session.notes && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-muted">
+                  <dt className="text-sm text-ink-soft">
                     Consignes
                   </dt>
-                  <dd className="mt-0.5 text-muted">{session.notes}</dd>
+                  <dd className="mt-0.5 text-ink-soft">{session.notes}</dd>
                 </div>
               )}
             </dl>
-          </Card>
+          </Panel>
 
           {/* L'annulation n'est proposée qu'aux administrateurs et seulement
               sur une séance à venir encore programmée. */}
           {user.role === "ADMIN" &&
             session.status === "SCHEDULED" &&
             !isPast && (
-              <Card>
-                <CardTitle>Zone sensible</CardTitle>
+              <Panel>
+                <PanelTitle>Zone sensible</PanelTitle>
                 <CancelSessionForm sessionId={session.id} />
-              </Card>
+              </Panel>
             )}
         </div>
       </div>

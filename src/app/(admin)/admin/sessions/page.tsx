@@ -6,7 +6,7 @@ import { getAdminSessions } from "@/lib/queries";
 import {
   Badge,
   ButtonLink,
-  Card,
+  Panel,
   EmptyState,
   PageHeader,
 } from "@/components/ui";
@@ -50,12 +50,12 @@ export default async function AdminSessionsPage({
           }
         />
       ) : (
-        <Card className="p-0">
+        <Panel className="p-0">
           {/* Le tableau déborde sur mobile : on le laisse défiler
               horizontalement dans son propre conteneur. */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
+              <thead className="border-b border-rule text-left text-xs uppercase tracking-wide text-ink-soft">
                 <tr>
                   <th scope="col" className="p-4">Séance</th>
                   <th scope="col" className="p-4">Date</th>
@@ -65,9 +65,9 @@ export default async function AdminSessionsPage({
                   <th scope="col" className="p-4">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-rule">
                 {sessions.map((session) => (
-                  <tr key={session.id} className="hover:bg-surface-muted">
+                  <tr key={session.id} className="hover:bg-surface-sunk">
                     <td className="p-4">
                       <Link
                         href={`/admin/sessions/${session.id}`}
@@ -76,12 +76,12 @@ export default async function AdminSessionsPage({
                         {session.activity.name}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap p-4 text-muted">
+                    <td className="whitespace-nowrap p-4 text-ink-soft">
                       {formatShortDate(session.startsAt)} ·{" "}
                       {formatTime(session.startsAt)}
                     </td>
-                    <td className="p-4 text-muted">{session.site.name}</td>
-                    <td className="p-4 text-muted">
+                    <td className="p-4 text-ink-soft">{session.site.name}</td>
+                    <td className="p-4 text-ink-soft">
                       {session.coach
                         ? `${session.coach.firstName} ${session.coach.lastName}`
                         : "—"}
@@ -93,10 +93,9 @@ export default async function AdminSessionsPage({
                       <Badge
                         tone={
                           session.status === "CANCELLED"
-                            ? "danger"
-                            : session.status === "DONE"
+                            ? "stop" : session.status === "DONE"
                               ? "neutral"
-                              : "success"
+                              : "go"
                         }
                       >
                         {sessionStatusLabel[session.status]}
@@ -116,7 +115,7 @@ export default async function AdminSessionsPage({
               basePath="/admin/sessions"
             />
           </div>
-        </Card>
+        </Panel>
       )}
     </>
   );

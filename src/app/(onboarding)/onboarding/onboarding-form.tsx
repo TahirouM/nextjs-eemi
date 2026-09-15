@@ -66,12 +66,12 @@ export function OnboardingForm({ sites }: { sites: Site[] }) {
           <li key={label} className="flex-1">
             <div
               className={`h-1 rounded-full ${
-                index <= step ? "bg-accent" : "bg-surface-muted"
+                index <= step ? "bg-accent" : "bg-surface-sunk"
               }`}
             />
             <p
               className={`mt-2 text-xs ${
-                index === step ? "font-medium" : "text-muted"
+                index === step ? "font-medium" : "text-ink-soft"
               }`}
             >
               {index + 1}. {label}
@@ -102,7 +102,7 @@ export function OnboardingForm({ sites }: { sites: Site[] }) {
       <div hidden={step !== 0} className="space-y-4">
         <div>
           <h2 className="font-semibold">Dans quelle salle venez-vous ?</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-ink-soft">
             Ce sera votre salle par défaut. Votre adhésion donne accès aux
             trois, vous pourrez changer à tout moment.
           </p>
@@ -130,7 +130,7 @@ export function OnboardingForm({ sites }: { sites: Site[] }) {
       <div hidden={step !== 1} className="space-y-4">
         <div>
           <h2 className="font-semibold">Quelques informations</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-ink-soft">
             Facultatif, mais utile au club pour vous joindre en cas
             d&apos;annulation de séance.
           </p>
@@ -165,7 +165,7 @@ export function OnboardingForm({ sites }: { sites: Site[] }) {
       <div hidden={step !== 2} className="space-y-4">
         <div>
           <h2 className="font-semibold">Votre formule</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-ink-soft">
             Aucun paiement n&apos;est demandé dans cette version.
           </p>
         </div>
@@ -184,10 +184,10 @@ export function OnboardingForm({ sites }: { sites: Site[] }) {
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+      <div className="flex items-center justify-between gap-3 border-t border-rule pt-4">
         <Button
           type="button"
-          variant="ghost"
+          variant="quiet"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
         >

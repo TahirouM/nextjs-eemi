@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ButtonLink, Card, PageHeader } from "@/components/ui";
+import { ButtonLink, Panel, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Questions fréquentes",
@@ -70,7 +70,7 @@ export default function FaqPage() {
 
       <div className="space-y-3">
         {faq.map((item) => (
-          <Card key={item.q} className="p-0">
+          <Panel key={item.q} className="p-0">
             {/* <details> natif : ouverture/fermeture sans une ligne de JS. */}
             <details className="group">
               <summary className="cursor-pointer list-none p-5 font-medium">
@@ -78,27 +78,27 @@ export default function FaqPage() {
                   {item.q}
                   <span
                     aria-hidden="true"
-                    className="text-muted transition group-open:rotate-45"
+                    className="text-ink-soft transition-transform duration-200 group-open:rotate-45"
                   >
                     +
                   </span>
                 </span>
               </summary>
-              <p className="px-5 pb-5 text-sm text-muted">{item.a}</p>
+              <p className="px-5 pb-5 text-sm text-ink-soft">{item.a}</p>
             </details>
-          </Card>
+          </Panel>
         ))}
       </div>
 
-      <Card className="mt-10 text-center">
+      <Panel className="mt-10 text-center">
         <p className="font-medium">Une autre question ?</p>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-ink-soft">
           L&apos;équipe du club répond sur place, dans les trois salles.
         </p>
         <ButtonLink href="/salles" variant="secondary" className="mt-4">
           Voir les salles
         </ButtonLink>
-      </Card>
+      </Panel>
     </div>
   );
 }

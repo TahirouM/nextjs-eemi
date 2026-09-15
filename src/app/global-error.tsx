@@ -30,7 +30,7 @@ export default function GlobalError({
         <h1 style={{ fontSize: "1.5rem", fontWeight: 600 }}>
           Une erreur inattendue est survenue
         </h1>
-        <p style={{ marginTop: ".5rem", color: "#6b7280" }}>
+        <p style={{ marginTop: ".5rem", color: "#5c6169" }}>
           L&apos;application n&apos;a pas pu démarrer correctement.
         </p>
         <button
@@ -38,7 +38,7 @@ export default function GlobalError({
           style={{
             marginTop: "1.5rem",
             borderRadius: ".5rem",
-            background: "#4d7c0f",
+            background: "#a8560f",
             color: "#fff",
             padding: ".5rem 1rem",
             border: 0,

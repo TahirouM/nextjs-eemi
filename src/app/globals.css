@@ -1,78 +1,181 @@
 @import "tailwindcss";
 
 /*
-  Design system ClubSport.
-  Palette sobre "salle de sport urbaine" : ardoise profonde + un accent lime
-  énergique, réservé aux actions et aux états actifs pour qu'il garde du poids.
+  ClubSport — système visuel.
+
+  Référence : le planning imprimé punaisé dans le hall d'un gymnase, et les
+  lignes peintes au sol d'un terrain. D'où les trois partis pris :
+    - une colonne d'heures visible comme rail vertical (le « spine ») ;
+    - des lignes de séparation nettes plutôt que des cartes flottantes ;
+    - un seul accent chaud (ocre vernis/laiton) réservé à l'action.
+
+  La couleur ne porte jamais une information seule : chaque état a aussi un
+  mot ou une forme (exigence d'accessibilité).
 */
+
 :root {
-  --background: #f7f7f5;
+  color-scheme: light;
+
+  /* Papier et encre */
+  --paper: #fbfaf7; /* blanc craie légèrement chaud */
   --surface: #ffffff;
-  --surface-muted: #f0f0ee;
-  --foreground: #16181d;
-  --muted: #6b7280;
-  --border: #e3e3df;
-  --accent: #4d7c0f;
-  --accent-foreground: #ffffff;
-  --accent-soft: #ecfccb;
-  --danger: #b91c1c;
-  --danger-soft: #fee2e2;
-  --warning: #92400e;
-  --warning-soft: #fef3c7;
-  --success: #15803d;
-  --success-soft: #dcfce7;
+  --surface-sunk: #f2efe9; /* creux : entêtes de tableau, rails */
+  --ink: #1a1d21; /* encre, pas un noir pur */
+  --ink-soft: #5c6169;
+  --rule: #ded8cd; /* filet imprimé */
+  --rule-strong: #c3bcae;
+
+  /* Accent : vernis de parquet / laiton */
+  --accent: #a8560f;
+  --accent-hover: #8e4709;
+  --accent-ink: #fffdf9;
+  --accent-wash: #fbeee0;
+
+  /* Bleu terrain, pour l'information et les liens secondaires */
+  --court: #1f4e79;
+  --court-wash: #e6eef6;
+
+  /* États sémantiques */
+  --go: #1d6b45;
+  --go-wash: #e2f2e9;
+  --warn: #8a5a08;
+  --warn-wash: #fbf0d9;
+  --stop: #a32b21;
+  --stop-wash: #fbe8e6;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0d0f12;
-    --surface: #16181d;
-    --surface-muted: #1e2127;
-    --foreground: #f2f3f5;
-    --muted: #9aa1ac;
-    --border: #2a2e36;
-    --accent: #a3e635;
-    --accent-foreground: #14210a;
-    --accent-soft: #1f2d10;
-    --danger: #fca5a5;
-    --danger-soft: #2a1414;
-    --warning: #fcd34d;
-    --warning-soft: #2a2110;
-    --success: #86efac;
-    --success-soft: #10250f;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    /* Gymnase le soir : parquet sombre, pas de noir d'encre */
+    --paper: #14161a;
+    --surface: #1b1e23;
+    --surface-sunk: #23272e;
+    --ink: #f0ede7;
+    --ink-soft: #a3a8b0;
+    --rule: #333941;
+    --rule-strong: #4a515b;
+
+    --accent: #e2913f;
+    --accent-hover: #f0a458;
+    --accent-ink: #1a1207;
+    --accent-wash: #2e2114;
+
+    --court: #7aa9d6;
+    --court-wash: #1b2733;
+
+    --go: #6cc196;
+    --go-wash: #16281f;
+    --warn: #e0b45c;
+    --warn-wash: #2a2213;
+    --stop: #ef9891;
+    --stop-wash: #2e1917;
   }
 }
 
+/* Choix explicite de l'utilisateur : il gagne sur la préférence système. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #14161a;
+  --surface: #1b1e23;
+  --surface-sunk: #23272e;
+  --ink: #f0ede7;
+  --ink-soft: #a3a8b0;
+  --rule: #333941;
+  --rule-strong: #4a515b;
+
+  --accent: #e2913f;
+  --accent-hover: #f0a458;
+  --accent-ink: #1a1207;
+  --accent-wash: #2e2114;
+
+  --court: #7aa9d6;
+  --court-wash: #1b2733;
+
+  --go: #6cc196;
+  --go-wash: #16281f;
+  --warn: #e0b45c;
+  --warn-wash: #2a2213;
+  --stop: #ef9891;
+  --stop-wash: #2e1917;
+}
+
 @theme inline {
-  --color-background: var(--background);
+  --color-paper: var(--paper);
   --color-surface: var(--surface);
-  --color-surface-muted: var(--surface-muted);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
   --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent-soft: var(--accent-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-wash: var(--accent-wash);
+  --color-court: var(--court);
+  --color-court-wash: var(--court-wash);
+  --color-go: var(--go);
+  --color-go-wash: var(--go-wash);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-stop: var(--stop);
+  --color-stop-wash: var(--stop-wash);
+
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono-face);
+}
+
+html {
+  /* Une ancre cliquée ne doit pas se coller sous l'en-tête collant. */
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
+  /* Évite le délai de 300 ms au double-tap sur mobile. */
+  touch-action: manipulation;
 }
 
-/* Accessibilité : un focus toujours visible, exigence du brief. */
+/*
+  Les chiffres qui se comparent (places restantes, statistiques, heures)
+  doivent s'aligner verticalement : chasse fixe.
+*/
+.nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/*
+  Le rail d'heures du planning : une ligne verticale continue le long de
+  laquelle se posent les séances, comme sur un planning mural.
+*/
+.rail {
+  position: relative;
+}
+.rail::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 2px;
+  background: var(--rule);
+}
+
+/* Focus toujours visible, jamais supprimé sans remplacement. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
+}
+
+/* Les <select> natifs doivent être lisibles en mode sombre sous Windows. */
+select {
+  background-color: var(--surface);
+  color: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -80,6 +183,8 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

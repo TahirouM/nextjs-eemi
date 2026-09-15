@@ -8,13 +8,7 @@ import {
   getUpcomingSessions,
   getUserBookings,
 } from "@/lib/queries";
-import {
-  Badge,
-  ButtonLink,
-  Card,
-  EmptyState,
-  PageHeader,
-} from "@/components/ui";
+import { Badge, ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { Pagination } from "@/components/pagination";
 import { SessionFilters } from "@/components/session-filters";
 import { BookButton } from "@/components/booking-buttons";
@@ -34,6 +28,9 @@ export const metadata: Metadata = {
  * secondes, afficherait « 2 places » sur une séance déjà complète — et la
  * réservation échouerait au clic. Le catalogue (salles, disciplines) est en
  * revanche lu depuis le cache : il ne bouge pas.
+ *
+ * Présentation : les séances sont groupées par jour, comme sur un planning
+ * mural. La date est un intertitre, pas une répétition sur chaque ligne.
  */
 export default async function SessionsPage({
   searchParams,
@@ -54,15 +51,24 @@ export default async function SessionsPage({
       getUserBookings(user.id, "upcoming"),
     ]);
 
-  // Ensemble des séances déjà réservées : évite de proposer « Réserver »
-  // sur une séance à laquelle le membre est déjà inscrit.
-  const bookedSessionIds = new Set(myBookings.map((b) => b.sessionId));
+  // Séances déjà réservées : évite de proposer « Réserver » sur une séance à
+  // laquelle le membre est déjà inscrit.
+  const booked = new Set(myBookings.map((b) => b.sessionId));
+
+  // Regroupement par jour, en conservant l'ordre chronologique du serveur.
+  const days = new Map<string, typeof sessions>();
+  for (const session of sessions) {
+    const key = formatDate(session.startsAt);
+    const list = days.get(key);
+    if (list) list.push(session);
+    else days.set(key, [session]);
+  }
 
   return (
     <>
       <PageHeader
         title="Réserver une séance"
-        description="Filtrez par salle ou par discipline. Les places restantes sont à jour à chaque chargement."
+        description="Les places restantes sont à jour à chaque chargement de la page."
       />
 
       <SessionFilters
@@ -73,7 +79,7 @@ export default async function SessionsPage({
       {sessions.length === 0 ? (
         <EmptyState
           title="Aucune séance ne correspond"
-          description="Essayez une autre salle ou une autre discipline : le planning est peut-être vide sur ce filtre."
+          description="Le planning est vide pour ce filtre. Essayez une autre salle ou une autre discipline."
           action={
             <ButtonLink href="/sessions" variant="secondary">
               Réinitialiser les filtres
@@ -82,64 +88,80 @@ export default async function SessionsPage({
         />
       ) : (
         <>
-          <ul className="space-y-3">
-            {sessions.map((session) => {
-              const remaining = session.capacity - session._count.bookings;
-              const alreadyBooked = bookedSessionIds.has(session.id);
+          {[...days.entries()].map(([day, list]) => (
+            <section key={day} className="mb-10">
+              <h2 className="sticky top-0 z-10 border-b-2 border-ink bg-paper pb-1.5 font-display text-sm font-semibold capitalize tracking-wide">
+                {day}
+              </h2>
 
-              return (
-                <li key={session.id}>
-                  <Card className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/sessions/${session.id}`}
-                          className="font-semibold hover:text-accent"
-                        >
-                          {session.activity.name}
-                        </Link>
-                        <Badge>
-                          {levelLabel[session.activity.level] ??
-                            session.activity.level}
-                        </Badge>
+              <ul>
+                {list.map((session) => {
+                  const left = session.capacity - session._count.bookings;
+                  const already = booked.has(session.id);
+
+                  return (
+                    <li
+                      key={session.id}
+                      className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-rule py-4"
+                    >
+                      <time
+                        dateTime={session.startsAt.toISOString()}
+                        className="nums w-[5.5rem] shrink-0 font-mono text-sm text-ink-soft"
+                      >
+                        {formatTime(session.startsAt)}
+                      </time>
+
+                      <div className="min-w-0 flex-1 basis-48">
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <Link
+                            href={`/sessions/${session.id}`}
+                            className="font-display text-lg font-semibold underline-offset-4 hover:text-accent hover:underline"
+                          >
+                            {session.activity.name}
+                          </Link>
+                          <Badge>
+                            {levelLabel[session.activity.level] ??
+                              session.activity.level}
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-sm text-ink-soft">
+                          {session.site.name}
+                          {session.coach
+                            ? ` · ${session.coach.firstName} ${session.coach.lastName}`
+                            : " · coach à confirmer"}
+                          {" · jusqu’à "}
+                          {formatTime(session.endsAt)}
+                        </p>
                       </div>
 
-                      <p className="mt-1 text-sm text-muted">
-                        <span className="capitalize">
-                          {formatDate(session.startsAt)}
-                        </span>{" "}
-                        · {formatTime(session.startsAt)} –{" "}
-                        {formatTime(session.endsAt)}
-                      </p>
-                      <p className="text-sm text-muted">
-                        {session.site.name} ·{" "}
-                        {session.coach
-                          ? `${session.coach.firstName} ${session.coach.lastName}`
-                          : "Coach à confirmer"}
-                      </p>
-                    </div>
+                      <div className="flex shrink-0 items-center gap-4">
+                        <span
+                          className={`nums text-sm ${
+                            left > 0
+                              ? "text-ink-soft"
+                              : "font-medium text-stop"
+                          }`}
+                        >
+                          {left > 0
+                            ? `${left} place${left > 1 ? "s" : ""}`
+                            : "complet"}
+                        </span>
 
-                    <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                      <Badge tone={remaining > 0 ? "success" : "danger"}>
-                        {remaining > 0
-                          ? `${remaining} place${remaining > 1 ? "s" : ""}`
-                          : "Complet"}
-                      </Badge>
-
-                      {alreadyBooked ? (
-                        <Badge tone="accent">Déjà inscrit</Badge>
-                      ) : (
-                        <BookButton
-                          sessionId={session.id}
-                          disabled={remaining <= 0}
-                        />
-                      )}
-                    </div>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
+                        {already ? (
+                          <Badge tone="go">Inscrit</Badge>
+                        ) : (
+                          <BookButton
+                            sessionId={session.id}
+                            disabled={left <= 0}
+                          />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
 
           <Pagination
             page={page}

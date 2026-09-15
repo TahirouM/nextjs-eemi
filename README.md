@@ -324,12 +324,49 @@ formulaire invalide (Zod + `role="alert"`), accès interdit (redirection serveur
 
 ### Accessibilité
 Lien d'évitement, focus visible, labels liés aux champs, `aria-invalid` /
-`aria-current`, erreurs en `role="alert"`, tableaux avec `<th scope>`,
-`prefers-reduced-motion`, thème clair/sombre automatique.
+`aria-current`, erreurs en `role="alert"` + `aria-live`, tableaux avec
+`<th scope>`, `prefers-reduced-motion`, `color-scheme` déclaré, thème
+clair/sombre automatique. La couleur ne porte jamais une information seule :
+chaque état est aussi nommé par un mot (« Complet », « Suspendue »).
 
 ---
 
-## 11. Limites connues
+## 11. Direction artistique
+
+**Référence :** le planning imprimé punaisé dans le hall d'un gymnase, et les
+lignes peintes au sol d'un terrain. Trois conséquences concrètes :
+
+- un **rail d'heures vertical** le long duquel s'accrochent les séances
+  (accueil, tableau de bord) ;
+- des **filets nets** plutôt que des cartes flottantes partout — l'ombre est
+  réservée aux éléments réellement superposés ;
+- un **seul accent chaud** (ocre vernis de parquet, `#a8560f`) réservé à
+  l'action, jamais utilisé en décoration.
+
+**Typographie.** Une seule famille, *Archivo*, exploitée sur son **axe de
+largeur** (`wdth`) : titres en large, texte courant en normal. Le lettrage
+large évoque les typographies peintes des gymnases et des dossards. *IBM Plex
+Mono* n'intervient que là où des caractères doivent s'aligner en colonne
+(heures, identifiants de bornes NFC, coordonnées GPS).
+
+**Choix écartés volontairement.** La première version utilisait un fond
+quasi-noir avec un accent vert acide — une combinaison si courante dans les
+interfaces générées qu'elle ne dit plus rien du sujet. Ont aussi été retirés :
+les étiquettes en CAPITALES au-dessus de chaque bloc, et la grille de cartes
+identiques à coins arrondis uniformes. Le rayon d'arrondi encode désormais la
+hiérarchie plutôt que d'être constant.
+
+**Conformité aux Web Interface Guidelines** (skill `web-design-guidelines`) :
+`transition-colors` au lieu de `transition` (jamais `all`),
+`font-variant-numeric: tabular-nums` sur les colonnes de chiffres,
+`text-balance` / `text-pretty` sur les titres et paragraphes,
+`touch-action: manipulation`, `<meta name="theme-color">` par thème,
+`translate="no"` sur les identifiants techniques, et zéro débordement
+horizontal de 360 px à 1440 px.
+
+---
+
+## 12. Limites connues
 
 - **Pas de liste d'attente** quand une séance est complète : le bouton est
   simplement désactivé.
@@ -351,7 +388,7 @@ Lien d'évitement, focus visible, labels liés aux champs, `aria-invalid` /
 
 ---
 
-## 12. Usage de l'IA
+## 13. Usage de l'IA
 
 **Outils utilisés.** Claude (Claude Code) en assistant de développement, sur
 l'ensemble du projet : cadrage, génération de code, débogage.
@@ -378,6 +415,21 @@ diagnostic a coûté plusieurs itérations. Deux corrections ont été apportée
 Une première rédaction proposait aussi `revalidateTag` dans les Server Actions ;
 la signature a changé en Next 16 et `updateTag` est le bon appel pour obtenir
 l'effet voulu. Vérifié dans les types de `next/cache` plutôt que supposé.
+
+**Refonte visuelle.** La direction artistique initiale (fond quasi-noir, accent
+vert acide, grille de cartes arrondies) a été entièrement refaite après lecture
+de deux guides de conception. Le point le plus instructif : la première version
+était esthétiquement correcte mais **générique** — elle aurait pu habiller
+n'importe quel produit. La version actuelle part du sujet lui-même (un planning
+de gymnase) et en tire sa structure.
+
+Un point a dû être corrigé deux fois : le tableau comparatif des tarifs
+débordait sur mobile. Le premier réflexe — `overflow-x: hidden` sur `<html>` —
+supprimait le symptôme mais **masquait la colonne Premium**, donc rendait la
+page inutilisable sur téléphone. La bonne réponse était de changer de forme
+sous 640 px (une liste par formule) plutôt que de faire défiler un tableau
+illisible. Le test de bout en bout a détecté la régression avant la
+correction.
 
 **Une partie du projet entièrement explicable.** La **chaîne d'authentification
 et d'autorisation** (`src/lib/session.ts`, `src/lib/auth.ts`, `src/proxy.ts`) :

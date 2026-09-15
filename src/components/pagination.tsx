@@ -31,9 +31,9 @@ export function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className="mt-6 flex items-center justify-between gap-4 border-t border-border pt-4"
+      className="mt-6 flex items-center justify-between gap-4 border-t border-rule pt-4"
     >
-      <p className="text-sm text-muted">
+      <p className="text-sm text-ink-soft">
         Page {page} sur {pageCount} · {total} résultat{total > 1 ? "s" : ""}
       </p>
 
@@ -41,12 +41,12 @@ export function Pagination({
         {page > 1 ? (
           <Link
             href={hrefFor(page - 1)}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm transition hover:bg-surface-muted"
+            className="rounded-sm border border-rule-strong px-3 py-1.5 text-sm transition-colors duration-150 hover:bg-surface-sunk"
           >
             Précédent
           </Link>
         ) : (
-          <span className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted opacity-50">
+          <span className="rounded-sm border border-rule-strong px-3 py-1.5 text-sm text-ink-soft opacity-50">
             Précédent
           </span>
         )}
@@ -54,12 +54,12 @@ export function Pagination({
         {page < pageCount ? (
           <Link
             href={hrefFor(page + 1)}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm transition hover:bg-surface-muted"
+            className="rounded-sm border border-rule-strong px-3 py-1.5 text-sm transition-colors duration-150 hover:bg-surface-sunk"
           >
             Suivant
           </Link>
         ) : (
-          <span className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted opacity-50">
+          <span className="rounded-sm border border-rule-strong px-3 py-1.5 text-sm text-ink-soft opacity-50">
             Suivant
           </span>
         )}

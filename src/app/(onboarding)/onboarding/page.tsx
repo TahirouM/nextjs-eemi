@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
 import { getSites } from "@/lib/queries";
-import { Card } from "@/components/ui";
+import { Panel } from "@/components/ui";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata: Metadata = {
@@ -22,15 +22,15 @@ export default async function OnboardingPage() {
   const sites = await getSites();
 
   return (
-    <Card>
+    <Panel>
       <h1 className="text-xl font-semibold tracking-tight">
         Bienvenue {user.firstName}
       </h1>
-      <p className="mt-1 mb-6 text-sm text-muted">
+      <p className="mt-1 mb-6 text-sm text-ink-soft">
         Trois étapes rapides et votre compte devient un vrai accès au club.
       </p>
 
       <OnboardingForm sites={sites} />
-    </Card>
+    </Panel>
   );
 }

@@ -58,7 +58,7 @@ export function CheckInButtons({
       </div>
 
       {state?.error && (
-        <p role="alert" className="text-xs text-danger">
+        <p role="alert" className="text-xs text-stop">
           {state.error}
         </p>
       )}
@@ -80,7 +80,7 @@ export function CancelSessionForm({ sessionId }: { sessionId: string }) {
         </Button>
       </form>
 
-      <p className="text-xs text-muted">
+      <p className="text-xs text-ink-soft">
         Toutes les inscriptions seront annulées. Action irréversible.
       </p>
 

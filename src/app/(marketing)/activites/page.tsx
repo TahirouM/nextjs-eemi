@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { getActivities } from "@/lib/queries";
-import { Badge, ButtonLink, Card, PageHeader } from "@/components/ui";
+import { Badge, PageHeader } from "@/components/ui";
 import { levelLabel } from "@/lib/format";
 
 export const metadata: Metadata = {
-  title: "Activités",
+  title: "Disciplines",
   description:
-    "Yoga, escalade, HIIT, natation, boxe et pilates : découvrez les six disciplines encadrées par les coachs ClubSport.",
+    "Yoga, escalade, HIIT, natation, boxe et pilates : les six disciplines encadrées par les coachs ClubSport.",
   alternates: { canonical: "/activites" },
 };
 
@@ -15,49 +16,57 @@ export const metadata: Metadata = {
 export default async function ActivitiesPage() {
   const activities = await getActivities();
 
-  // Regroupement par ville pour donner une structure lisible à la page.
+  // Regroupement par ville : c'est la première question que se pose un
+  // visiteur (« qu'est-ce qu'il y a près de chez moi ? »).
   const byCity = activities.reduce<Record<string, typeof activities>>(
     (acc, activity) => {
-      const city = activity.site.city;
-      (acc[city] ??= []).push(activity);
+      (acc[activity.site.city] ??= []).push(activity);
       return acc;
     },
     {},
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-12">
       <PageHeader
-        title="Nos activités"
-        description="Six disciplines encadrées, réparties sur nos trois salles. Chaque séance est animée par un coach du club, en petit groupe."
+        title="Nos disciplines"
+        description="Six disciplines encadrées, réparties sur trois salles. Chaque séance est animée par un coach du club, en petit groupe."
       />
 
       {Object.entries(byCity).map(([city, list]) => (
         <section key={city} className="mb-12">
-          <h2 className="mb-4 text-lg font-semibold tracking-tight">{city}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="border-b-2 border-ink pb-1.5 font-display text-sm font-semibold tracking-wide">
+            {city}
+          </h2>
+
+          <ul>
             {list.map((activity) => (
-              <Card key={activity.id} className="flex flex-col">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-semibold">{activity.name}</h3>
-                  <Badge>{levelLabel[activity.level] ?? activity.level}</Badge>
-                </div>
-                <p className="mt-2 flex-1 text-sm text-muted">
-                  {activity.description}
-                </p>
-                <p className="mt-4 text-xs text-muted">
-                  {activity.site.name} · {activity.durationMin} min
-                </p>
-                <ButtonLink
+              <li key={activity.id} className="border-b border-rule">
+                <Link
                   href={`/activites/${activity.slug}`}
-                  variant="secondary"
-                  className="mt-4"
+                  className="group block py-5 transition-colors duration-150 hover:bg-surface-sunk"
                 >
-                  Détail et horaires
-                </ButtonLink>
-              </Card>
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+                    <h3 className="font-display text-xl font-semibold group-hover:text-accent">
+                      {activity.name}
+                    </h3>
+                    <Badge>
+                      {levelLabel[activity.level] ?? activity.level}
+                    </Badge>
+                    <span className="nums ms-auto font-mono text-sm text-ink-soft">
+                      {activity.durationMin} min
+                    </span>
+                  </div>
+                  <p className="mt-1.5 max-w-prose text-pretty text-sm leading-relaxed text-ink-soft">
+                    {activity.description}
+                  </p>
+                  <p className="mt-1.5 text-sm text-ink-soft">
+                    {activity.site.name}
+                  </p>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ))}
     </div>

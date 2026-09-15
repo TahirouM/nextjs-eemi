@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getAdminMembers } from "@/lib/queries";
 import {
   Badge,
-  Card,
+  Panel,
   EmptyState,
   Input,
   PageHeader,
@@ -65,7 +65,7 @@ export default async function AdminMembersPage({
         {query && (
           <Link
             href="/admin/members"
-            className="inline-flex items-center rounded-lg px-3 text-sm text-muted hover:text-foreground"
+            className="inline-flex items-center rounded-sm px-3 text-sm text-ink-soft hover:text-ink"
           >
             Réinitialiser
           </Link>
@@ -82,10 +82,10 @@ export default async function AdminMembersPage({
           }
         />
       ) : (
-        <Card className="p-0">
+        <Panel className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
+              <thead className="border-b border-rule text-left text-xs uppercase tracking-wide text-ink-soft">
                 <tr>
                   <th scope="col" className="p-4">Membre</th>
                   <th scope="col" className="p-4">Rôle</th>
@@ -95,11 +95,11 @@ export default async function AdminMembersPage({
                   <th scope="col" className="p-4">Inscrit le</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-rule">
                 {users.map((member) => {
                   const membership = member.memberships[0];
                   return (
-                    <tr key={member.id} className="hover:bg-surface-muted">
+                    <tr key={member.id} className="hover:bg-surface-sunk">
                       <td className="p-4">
                         <Link
                           href={`/admin/members/${member.id}`}
@@ -107,7 +107,7 @@ export default async function AdminMembersPage({
                         >
                           {member.firstName} {member.lastName}
                         </Link>
-                        <p className="text-xs text-muted">{member.email}</p>
+                        <p className="text-xs text-ink-soft">{member.email}</p>
                       </td>
                       <td className="p-4">
                         <Badge
@@ -122,14 +122,14 @@ export default async function AdminMembersPage({
                             {membershipStatusLabel[membership.status]}
                           </Badge>
                         ) : (
-                          <span className="text-muted">—</span>
+                          <span className="text-ink-soft">—</span>
                         )}
                       </td>
-                      <td className="p-4 text-muted">
+                      <td className="p-4 text-ink-soft">
                         {member.preferredSite?.name ?? "—"}
                       </td>
                       <td className="p-4">{member._count.bookings}</td>
-                      <td className="whitespace-nowrap p-4 text-muted">
+                      <td className="whitespace-nowrap p-4 text-ink-soft">
                         {formatShortDate(member.createdAt)}
                       </td>
                     </tr>
@@ -148,7 +148,7 @@ export default async function AdminMembersPage({
               params={{ q: query }}
             />
           </div>
-        </Card>
+        </Panel>
       )}
     </>
   );

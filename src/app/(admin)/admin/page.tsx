@@ -8,8 +8,9 @@ import { getAdminStats } from "@/lib/queries";
 import {
   Badge,
   ButtonLink,
-  Card,
-  CardTitle,
+  Panel,
+  PanelTitle,
+  Stat,
   EmptyState,
   PageHeader,
   Skeleton,
@@ -47,11 +48,11 @@ export default async function AdminHomePage() {
       </Suspense>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Suspense fallback={<Card><CardTitle>Prochaines séances</CardTitle><Skeleton className="h-32" /></Card>}>
+        <Suspense fallback={<Panel><PanelTitle>Prochaines séances</PanelTitle><Skeleton className="h-32" /></Panel>}>
           <NextSessions />
         </Suspense>
 
-        <Suspense fallback={<Card><CardTitle>Séances à faible remplissage</CardTitle><Skeleton className="h-32" /></Card>}>
+        <Suspense fallback={<Panel><PanelTitle>Séances à faible remplissage</PanelTitle><Skeleton className="h-32" /></Panel>}>
           <LowAttendance />
         </Suspense>
       </div>
@@ -63,22 +64,17 @@ async function AdminStats() {
   const stats = await getAdminStats();
 
   const cards = [
-    { label: "Comptes", value: stats.members },
-    { label: "Adhésions actives", value: stats.activeMemberships },
-    { label: "Séances à venir", value: stats.upcomingSessions },
-    { label: "Inscriptions (7 j)", value: stats.weekBookings },
-    { label: "Absences", value: stats.noShows },
+    { label: "comptes", value: stats.members },
+    { label: "adhésions actives", value: stats.activeMemberships },
+    { label: "séances à venir", value: stats.upcomingSessions },
+    { label: "inscriptions sur 7 jours", value: stats.weekBookings },
+    { label: "absences constatées", value: stats.noShows },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
-        <Card key={card.label}>
-          <p className="text-xs uppercase tracking-wide text-muted">
-            {card.label}
-          </p>
-          <p className="mt-1 text-3xl font-semibold">{card.value}</p>
-        </Card>
+        <Stat key={card.label} value={card.value} label={card.label} />
       ))}
     </div>
   );
@@ -99,8 +95,8 @@ async function NextSessions() {
   });
 
   return (
-    <Card>
-      <CardTitle
+    <Panel>
+      <PanelTitle
         action={
           <Link href="/admin/sessions" className="text-sm font-medium text-accent">
             Tout voir
@@ -108,7 +104,7 @@ async function NextSessions() {
         }
       >
         Prochaines séances
-      </CardTitle>
+      </PanelTitle>
 
       {sessions.length === 0 ? (
         <EmptyState
@@ -116,7 +112,7 @@ async function NextSessions() {
           description="Créez une séance pour ouvrir les réservations."
         />
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-rule">
           {sessions.map((session) => (
             <li key={session.id} className="flex items-center gap-4 py-3">
               <div className="min-w-0 flex-1">
@@ -126,7 +122,7 @@ async function NextSessions() {
                 >
                   {session.activity.name}
                 </Link>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-ink-soft">
                   <span className="capitalize">
                     {formatDate(session.startsAt)}
                   </span>{" "}
@@ -140,7 +136,7 @@ async function NextSessions() {
           ))}
         </ul>
       )}
-    </Card>
+    </Panel>
   );
 }
 
@@ -169,8 +165,8 @@ async function LowAttendance() {
     .slice(0, 6);
 
   return (
-    <Card>
-      <CardTitle>Séances à faible remplissage</CardTitle>
+    <Panel>
+      <PanelTitle>Séances à faible remplissage</PanelTitle>
 
       {low.length === 0 ? (
         <EmptyState
@@ -178,7 +174,7 @@ async function LowAttendance() {
           description="Aucune séance à venir sous les 40 % de remplissage."
         />
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-rule">
           {low.map((session) => {
             const ratio = Math.round(
               (session._count.bookings / session.capacity) * 100,
@@ -192,31 +188,31 @@ async function LowAttendance() {
                   >
                     {session.activity.name}
                   </Link>
-                  <p className="text-sm text-muted">
+                  <p className="text-sm text-ink-soft">
                     <span className="capitalize">
                       {formatDate(session.startsAt)}
                     </span>{" "}
                     · {session.site.name}
                   </p>
                 </div>
-                <Badge tone={ratio === 0 ? "danger" : "warning"}>{ratio} %</Badge>
+                <Badge tone={ratio === 0 ? "stop" : "warn"}>{ratio} %</Badge>
               </li>
             );
           })}
         </ul>
       )}
-    </Card>
+    </Panel>
   );
 }
 
 function StatsSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Card key={i}>
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="mt-3 h-8 w-12" />
-        </Card>
+        <div key={i} className="border-l-2 border-rule pl-4">
+          <Skeleton className="h-8 w-14" />
+          <Skeleton className="mt-2.5 h-4 w-24" />
+        </div>
       ))}
     </div>
   );

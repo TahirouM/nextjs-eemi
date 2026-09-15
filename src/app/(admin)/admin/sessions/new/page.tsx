@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { requireAdmin } from "@/lib/auth";
 import { getActivities, getCoaches, getSites } from "@/lib/queries";
-import { Card, PageHeader } from "@/components/ui";
+import { Panel, PageHeader } from "@/components/ui";
 import { toDateTimeLocal } from "@/lib/format";
 import { SessionForm } from "./session-form";
 
@@ -32,7 +32,7 @@ export default async function NewSessionPage() {
     <>
       <Link
         href="/admin/sessions"
-        className="text-sm text-muted hover:text-foreground"
+        className="text-sm text-ink-soft hover:text-ink"
       >
         ← Retour aux séances
       </Link>
@@ -44,7 +44,7 @@ export default async function NewSessionPage() {
         />
       </div>
 
-      <Card className="max-w-3xl">
+      <Panel className="max-w-3xl">
         <SessionForm
           activities={activities.map((a) => ({
             id: a.id,
@@ -57,7 +57,7 @@ export default async function NewSessionPage() {
           }))}
           defaultStartsAt={toDateTimeLocal(tomorrow)}
         />
-      </Card>
+      </Panel>
     </>
   );
 }
