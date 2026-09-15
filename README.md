@@ -335,8 +335,18 @@ chaque état est aussi nommé par un mot (« Complet », « Suspendue »).
 
 ## 11. Déploiement sur Vercel
 
-Le projet est **préparé** pour Vercel. Trois étapes restent à faire, car elles
-demandent des comptes personnels.
+**En ligne : https://clubsport-seven.vercel.app**
+
+| | |
+|---|---|
+| Hébergement | Vercel, région `cdg1` (Paris) |
+| Base de données | Neon PostgreSQL 18, région `eu-west-2` (Londres) |
+| Migrations | appliquées automatiquement au build (`vercel-build`) |
+| Données de démonstration | 6 comptes, 3 salles, 6 disciplines, 80 séances |
+
+Les comptes de démonstration de la section 2 fonctionnent en production.
+
+### Reproduire le déploiement
 
 ### 1. Une base PostgreSQL managée
 
@@ -534,10 +544,9 @@ horizontal de 360 px à 1440 px.
   exécution. À ne pas lancer sur une base contenant des données à conserver.
 - **Le contenu de la base n'est pas traduit** : les noms de disciplines et de
   salles restent en français en anglais (cf. section 11).
-- **Déploiement préparé mais non effectué** : la configuration Vercel est en
-  place (`vercel.json`, scripts Prisma, `directUrl`, variables documentées),
-  mais la mise en ligne demande un compte Vercel et une base managée. La
-  marche à suivre complète est en section 11.
+- **Base de production partagée avec la démonstration** : le seed y a été joué
+  une fois. Le relancer effacerait les données créées depuis (c'est volontaire :
+  il n'est pas rejoué automatiquement au déploiement).
 
 ---
 

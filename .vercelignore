@@ -7,3 +7,11 @@ tests
 
 # Documents de travail
 *.pdf
+
+# Fichiers d'environnement locaux.
+# IMPORTANT : .vercelignore n'hérite PAS de .gitignore. Sans ces lignes, le
+# .env local (qui pointe vers localhost) est envoyé et ÉCRASE les variables
+# définies sur Vercel — le build échoue alors sur une base injoignable.
+.env
+.env.*
+!.env.example
