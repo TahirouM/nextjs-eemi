@@ -1,0 +1,9 @@
+# Dépendances et artefacts : Vercel les reconstruit lui-même.
+node_modules
+.next
+
+# Tests de bout en bout : ils pilotent un navigateur, inutiles au déploiement.
+tests
+
+# Documents de travail
+*.pdf
