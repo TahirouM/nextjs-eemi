@@ -139,6 +139,27 @@ await step("membre suspendu ne peut plus réserver",async()=>{
   await page.waitForSelector("text=adhésion n'est pas active",{timeout:30000});
 });
 
+console.log("\n— Session invalide (régression ERR_TOO_MANY_REDIRECTS) —");
+await step("cookie signé sans session en base : pas de boucle",async()=>{
+  await login("membre@clubsport.fr");
+  // Supprime les sessions en base SANS toucher au cookie du navigateur :
+  // c'est ce que provoque un `db:seed` pendant qu'un onglet reste ouvert.
+  execSync(`docker exec eemi-clubsport-db psql -U clubsport -d clubsport -c 'DELETE FROM "AuthSession";'`,{stdio:"ignore"});
+  await page.goto(BASE+"/dashboard",{timeout:20000});   // boucle -> throw
+  await page.waitForLoadState("networkidle");
+  if(!page.url().includes("/login")) throw new Error("URL inattendue: "+page.url());
+  if(await page.locator("#email").count()===0) throw new Error("formulaire de connexion absent");
+  // Le cookie mort doit avoir été retiré par le proxy.
+  const reste=(await page.context().cookies()).filter(c=>c.name==="clubsport_session");
+  if(reste.length>0) throw new Error("cookie fantôme toujours présent");
+});
+await step("reconnexion possible après session invalidée",async()=>{
+  await page.waitForSelector("#email",{timeout:20000});
+  await page.fill("#email","membre@clubsport.fr");
+  await page.fill("#password","Password123!");
+  await Promise.all([page.waitForURL(u=>!u.pathname.startsWith("/login"),{timeout:60000}),page.click('button[type=submit]')]);
+});
+
 console.log("\n— Responsive —");
 await step("mobile 390px sans débordement horizontal",async()=>{
   const m=await (await b.newContext()).newPage();

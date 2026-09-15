@@ -61,10 +61,21 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return session.user;
 });
 
-/** Exige une session valide. Utilisé par tout l'espace (app). */
+/**
+ * Exige une session valide. Utilisé par tout l'espace (app).
+ *
+ * Le paramètre `?stale=1` est ajouté quand un cookie est présent mais ne
+ * correspond à aucune session vivante. Il sert de signal au proxy, qui tourne
+ * sur l'Edge runtime et ne peut pas interroger la base : sans lui, le proxy
+ * verrait un cookie signé valide et renverrait aussitôt vers /dashboard,
+ * créant une boucle de redirections.
+ */
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const hadCookie = (await readSessionCookie()) !== null;
+    redirect(hadCookie ? "/login?stale=1" : "/login");
+  }
   return user;
 }
 

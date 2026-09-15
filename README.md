@@ -294,7 +294,7 @@ pointage.
 - **TypeScript strict** : `npm run typecheck` — 0 erreur
 - **ESLint** : `npm run lint` — 0 erreur
 - **Build de production** : réussi, 25 routes
-- **Tests de bout en bout** : `npm run test:e2e` — **14/14**, 0 erreur console
+- **Tests de bout en bout** : `npm run test:e2e` — **16/16**, 0 erreur console
 
 Les tests utilisent le Chrome installé sur la machine (`channel: "chrome"`) ;
 sinon, `npx playwright install chromium` puis retirer l'option `channel`.
@@ -316,6 +316,8 @@ Couverture des tests (`tests/e2e.mjs`) :
 | Auto-modification du rôle | Garde-fou serveur |
 | Membre suspendu | **Règle métier serveur** (réservation refusée) |
 | Mobile 390 px | Aucun débordement horizontal |
+| Cookie signé sans session en base | Aucune boucle de redirection, cookie nettoyé |
+| Reconnexion après session invalidée | L'utilisateur retrouve son espace |
 
 ### États d'interface couverts
 Chargement (`loading.tsx` + `<Suspense>`), liste vide (`EmptyState`), erreur
@@ -430,6 +432,35 @@ page inutilisable sur téléphone. La bonne réponse était de changer de forme
 sous 640 px (une liste par formule) plutôt que de faire défiler un tableau
 illisible. Le test de bout en bout a détecté la régression avant la
 correction.
+
+**Un bug de conception trouvé en production locale : `ERR_TOO_MANY_REDIRECTS`.**
+Symptôme : après un `npm run db:seed` effectué pendant qu'un onglet restait
+ouvert, toute route privée partait en boucle infinie de redirections.
+
+Cause réelle — un désaccord entre les deux couches de sécurité :
+
+1. le **proxy** (Edge runtime) ne voit que la *signature* du cookie, qui reste
+   valide : il laisse passer, et renvoie même `/login` vers `/dashboard` ;
+2. le **serveur** interroge la base, ne trouve plus la ligne `AuthSession`
+   (supprimée par le seed) et redirige vers `/login` ;
+3. retour au point 1 — jusqu'à ce que le navigateur abandonne.
+
+Ce n'est pas une erreur de frappe : c'est la conséquence logique d'un cookie
+« signé mais mort », et cela se produirait aussi en production lors d'une purge
+des sessions expirées ou d'une révocation depuis un autre appareil.
+
+Correction en deux temps :
+- `requireUser()` ajoute `?stale=1` quand un cookie existe mais qu'aucune
+  session ne lui correspond ; le proxy cesse alors de renvoyer vers
+  `/dashboard` — la boucle est rompue ;
+- le proxy **supprime** ce cookie fantôme, pour que l'incohérence ne se
+  reproduise pas à la visite suivante.
+
+Une première tentative plaçait ce nettoyage dans un composant de page. Next.js
+l'a refusée : *« Cookies can only be modified in a Server Action or Route
+Handler »*. Le proxy est le bon endroit — c'est l'un des rares contextes où
+l'écriture d'un cookie est autorisée. Deux tests de régression couvrent
+désormais ce scénario.
 
 **Une partie du projet entièrement explicable.** La **chaîne d'authentification
 et d'autorisation** (`src/lib/session.ts`, `src/lib/auth.ts`, `src/proxy.ts`) :
