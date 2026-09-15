@@ -1,11 +1,12 @@
 import "server-only";
 
 import { cache } from "react";
-import { redirect } from "next/navigation";
+
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { redirectLocalized } from "@/lib/errors";
 import { readSessionCookie, verifySessionToken } from "@/lib/session";
 
 /**
@@ -74,7 +75,9 @@ export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) {
     const hadCookie = (await readSessionCookie()) !== null;
-    redirect(hadCookie ? "/login?stale=1" : "/login");
+    // `redirectLocalized` ne rend jamais la main (il lève l'exception interne
+    // de Next.js), mais TypeScript ne peut pas le déduire à travers un `await`.
+    return await redirectLocalized(hadCookie ? "/login?stale=1" : "/login");
   }
   return user;
 }
@@ -82,7 +85,7 @@ export async function requireUser(): Promise<CurrentUser> {
 /** Exige une session ET un onboarding terminé. */
 export async function requireOnboardedUser(): Promise<CurrentUser> {
   const user = await requireUser();
-  if (!user.onboarded) redirect("/onboarding");
+  if (!user.onboarded) await redirectLocalized("/onboarding");
   return user;
 }
 
@@ -93,7 +96,7 @@ export async function requireOnboardedUser(): Promise<CurrentUser> {
  */
 export async function requireRole(...roles: Role[]): Promise<CurrentUser> {
   const user = await requireOnboardedUser();
-  if (!roles.includes(user.role)) redirect("/dashboard?error=forbidden");
+  if (!roles.includes(user.role)) await redirectLocalized("/dashboard?error=forbidden");
   return user;
 }
 

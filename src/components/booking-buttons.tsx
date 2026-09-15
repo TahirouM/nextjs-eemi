@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { useFormStatus } from "react-dom";
 
 import { bookSessionAction, cancelBookingAction } from "@/actions/bookings";
@@ -50,6 +51,7 @@ export function BookButton({
   disabled?: boolean;
   full?: boolean;
 }) {
+  const t = useTranslations("sessions");
   const [state, formAction] = useActionState(bookSessionAction, null);
 
   return (
@@ -57,8 +59,8 @@ export function BookButton({
       <form action={formAction}>
         <input type="hidden" name="sessionId" value={sessionId} />
         <Submit
-          label="Réserver"
-          pendingLabel="Réservation…"
+          label={t("book")}
+          pendingLabel={t("booking")}
           disabled={disabled}
           full={full}
         />
@@ -77,6 +79,7 @@ export function CancelButton({
   bookingId: string;
   full?: boolean;
 }) {
+  const t = useTranslations("sessions");
   const [state, formAction] = useActionState(cancelBookingAction, null);
 
   return (
@@ -84,8 +87,8 @@ export function CancelButton({
       <form action={formAction}>
         <input type="hidden" name="bookingId" value={bookingId} />
         <Submit
-          label="Annuler"
-          pendingLabel="Annulation…"
+          label={t("cancel")}
+          pendingLabel={t("cancelling")}
           variant="danger"
           full={full}
         />

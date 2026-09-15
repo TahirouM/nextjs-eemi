@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { useFormStatus } from "react-dom";
 
 import { checkInAction } from "@/actions/bookings";
@@ -27,6 +28,7 @@ export function CheckInButtons({
   bookingId: string;
   status: string;
 }) {
+  const t = useTranslations("admin");
   const [state, formAction] = useActionState(checkInAction, null);
 
   return (
@@ -40,7 +42,7 @@ export function CheckInButtons({
             variant={status === "ATTENDED" ? "primary" : "secondary"}
             className="px-3 py-1 text-xs"
           >
-            <Pending label="Présent" pendingLabel="…" />
+            <Pending label={t("present")} pendingLabel="…" />
           </Button>
         </form>
 
@@ -52,7 +54,7 @@ export function CheckInButtons({
             variant={status === "NO_SHOW" ? "danger" : "secondary"}
             className="px-3 py-1 text-xs"
           >
-            <Pending label="Absent" pendingLabel="…" />
+            <Pending label={t("absent")} pendingLabel="…" />
           </Button>
         </form>
       </div>
@@ -69,6 +71,7 @@ export function CheckInButtons({
 /* ------------------------- Annulation de séance ------------------------ */
 
 export function CancelSessionForm({ sessionId }: { sessionId: string }) {
+  const t = useTranslations("admin");
   const [state, formAction] = useActionState(cancelSessionAction, null);
 
   return (
@@ -76,12 +79,12 @@ export function CancelSessionForm({ sessionId }: { sessionId: string }) {
       <form action={formAction}>
         <input type="hidden" name="sessionId" value={sessionId} />
         <Button type="submit" variant="danger" className="w-full">
-          <Pending label="Annuler la séance" pendingLabel="Annulation…" />
+          <Pending label={t("cancelSession")} pendingLabel={t("cancellingSession")} />
         </Button>
       </form>
 
       <p className="text-xs text-ink-soft">
-        Toutes les inscriptions seront annulées. Action irréversible.
+        {t("cancelSessionWarning")}
       </p>
 
       {state?.error && <Alert tone="error">{state.error}</Alert>}
@@ -99,6 +102,8 @@ export function MembershipStatusForm({
   userId: string;
   current: string;
 }) {
+  const t = useTranslations("admin");
+  const tStatus = useTranslations("status");
   const [state, formAction] = useActionState(updateMembershipStatusAction, null);
 
   return (
@@ -106,13 +111,13 @@ export function MembershipStatusForm({
       <form action={formAction} className="flex gap-2">
         <input type="hidden" name="userId" value={userId} />
         <Select name="status" defaultValue={current} className="text-sm">
-          <option value="PENDING">En attente</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspendue</option>
-          <option value="EXPIRED">Expirée</option>
+          <option value="PENDING">{tStatus("pending")}</option>
+          <option value="ACTIVE">{tStatus("active")}</option>
+          <option value="SUSPENDED">{tStatus("suspended")}</option>
+          <option value="EXPIRED">{tStatus("expired")}</option>
         </Select>
         <Button type="submit" variant="secondary">
-          <Pending label="Appliquer" pendingLabel="…" />
+          <Pending label={t("apply")} pendingLabel="…" />
         </Button>
       </form>
 
@@ -131,6 +136,8 @@ export function RoleForm({
   userId: string;
   current: string;
 }) {
+  const t = useTranslations("admin");
+  const tStatus = useTranslations("status");
   const [state, formAction] = useActionState(updateUserRoleAction, null);
 
   return (
@@ -138,12 +145,12 @@ export function RoleForm({
       <form action={formAction} className="flex gap-2">
         <input type="hidden" name="userId" value={userId} />
         <Select name="role" defaultValue={current} className="text-sm">
-          <option value="MEMBER">Membre</option>
-          <option value="COACH">Coach</option>
-          <option value="ADMIN">Administrateur</option>
+          <option value="MEMBER">{tStatus("member")}</option>
+          <option value="COACH">{tStatus("coach")}</option>
+          <option value="ADMIN">{tStatus("admin")}</option>
         </Select>
         <Button type="submit" variant="secondary">
-          <Pending label="Appliquer" pendingLabel="…" />
+          <Pending label={t("apply")} pendingLabel="…" />
         </Button>
       </form>
 

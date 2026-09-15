@@ -8,8 +8,24 @@ import type { BookingStatus, MembershipStatus, SessionStatus } from "@prisma/cli
 
 const TZ = "Europe/Paris";
 
-export function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("fr-FR", {
+/**
+ * Les dates suivent la langue affichée : « mardi 15 septembre » en français,
+ * « Tuesday, 15 September » en anglais. `Intl` s'en charge — on ne code jamais
+ * un format de date à la main.
+ *
+ * Le fuseau reste forcé sur Europe/Paris : les séances ont lieu à Paris, quelle
+ * que soit la langue ou le lieu depuis lequel on consulte le planning. Cela
+ * garantit aussi que le rendu serveur et le rendu client produisent la même
+ * chaîne, sans erreur d'hydratation.
+ */
+type Lang = "fr" | "en";
+
+function tag(locale: Lang = "fr") {
+  return locale === "en" ? "en-GB" : "fr-FR";
+}
+
+export function formatDate(date: Date, locale: Lang = "fr") {
+  return new Intl.DateTimeFormat(tag(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -17,8 +33,8 @@ export function formatDate(date: Date) {
   }).format(date);
 }
 
-export function formatShortDate(date: Date) {
-  return new Intl.DateTimeFormat("fr-FR", {
+export function formatShortDate(date: Date, locale: Lang = "fr") {
+  return new Intl.DateTimeFormat(tag(locale), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -26,16 +42,12 @@ export function formatShortDate(date: Date) {
   }).format(date);
 }
 
-export function formatTime(date: Date) {
-  return new Intl.DateTimeFormat("fr-FR", {
+export function formatTime(date: Date, locale: Lang = "fr") {
+  return new Intl.DateTimeFormat(tag(locale), {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: TZ,
   }).format(date);
-}
-
-export function formatDateTime(date: Date) {
-  return `${formatDate(date)} à ${formatTime(date)}`;
 }
 
 /** Valeur pour un <input type="datetime-local">. */
@@ -44,12 +56,12 @@ export function toDateTimeLocal(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export const bookingStatusLabel: Record<BookingStatus, string> = {
-  BOOKED: "Réservée",
-  CONFIRMED: "Confirmée",
-  ATTENDED: "Présent",
-  NO_SHOW: "Absent",
-  CANCELLED: "Annulée",
+export const bookingStatusKey: Record<BookingStatus, string> = {
+  BOOKED: "booked",
+  CONFIRMED: "confirmed",
+  ATTENDED: "attended",
+  NO_SHOW: "noShow",
+  CANCELLED: "cancelled",
 };
 
 export const bookingStatusTone: Record<
@@ -63,11 +75,11 @@ export const bookingStatusTone: Record<
   CANCELLED: "neutral",
 };
 
-export const membershipStatusLabel: Record<MembershipStatus, string> = {
-  PENDING: "En attente",
-  ACTIVE: "Active",
-  SUSPENDED: "Suspendue",
-  EXPIRED: "Expirée",
+export const membershipStatusKey: Record<MembershipStatus, string> = {
+  PENDING: "pending",
+  ACTIVE: "active",
+  SUSPENDED: "suspended",
+  EXPIRED: "expired",
 };
 
 export const membershipStatusTone: Record<
@@ -80,22 +92,16 @@ export const membershipStatusTone: Record<
   EXPIRED: "neutral",
 };
 
-export const sessionStatusLabel: Record<SessionStatus, string> = {
-  SCHEDULED: "Programmée",
-  CANCELLED: "Annulée",
-  DONE: "Terminée",
+export const sessionStatusKey: Record<SessionStatus, string> = {
+  SCHEDULED: "scheduled",
+  CANCELLED: "cancelled",
+  DONE: "done",
 };
 
-export const roleLabel: Record<string, string> = {
-  MEMBER: "Membre",
-  COACH: "Coach",
-  ADMIN: "Administrateur",
-};
-
-export const levelLabel: Record<string, string> = {
-  all: "Tous niveaux",
-  intermediate: "Intermédiaire",
-  advanced: "Confirmé",
+export const roleKey: Record<string, string> = {
+  MEMBER: "member",
+  COACH: "coach",
+  ADMIN: "admin",
 };
 
 /**

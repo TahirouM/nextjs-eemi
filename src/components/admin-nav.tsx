@@ -1,23 +1,35 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/routing";
 
 /** Onglets du back-office. Client Component pour signaler l'onglet actif. */
-export function AdminNav({ isAdmin }: { isAdmin: boolean }) {
+export function AdminNav({
+  isAdmin,
+  labels,
+}: {
+  isAdmin: boolean;
+  labels: {
+    overview: string;
+    sessions: string;
+    members: string;
+    ariaLabel: string;
+  };
+}) {
   const pathname = usePathname();
 
   const links = [
-    { href: "/admin", label: "Vue d’ensemble", exact: true },
-    { href: "/admin/sessions", label: "Séances" },
+    { href: "/admin", label: labels.overview, exact: true },
+    { href: "/admin/sessions", label: labels.sessions, exact: false },
     // La gestion des membres est réservée aux administrateurs : un coach anime
     // des séances, il n'administre pas les adhésions.
-    ...(isAdmin ? [{ href: "/admin/members", label: "Membres" }] : []),
-  ];
+    ...(isAdmin
+      ? [{ href: "/admin/members", label: labels.members, exact: false }]
+      : []),
+  ] as const;
 
   return (
     <nav
-      aria-label="Navigation de l'administration"
+      aria-label={labels.ariaLabel}
       className="mx-auto max-w-6xl overflow-x-auto px-4"
     >
       <ul className="flex gap-6">

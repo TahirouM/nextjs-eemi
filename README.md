@@ -27,7 +27,7 @@ npm run db:migrate       # applique les migrations Prisma
 npm run db:seed          # crée sites, activités, 80 séances, comptes de démo
 
 # 4. Lancement
-npm run dev              # http://localhost:3005
+npm run dev              # http://localhost:3005  (redirige vers /fr)
 ```
 
 > Le port **3005** est utilisé car 3000/3001 étaient occupés sur la machine de
@@ -333,7 +333,55 @@ chaque état est aussi nommé par un mot (« Complet », « Suspendue »).
 
 ---
 
-## 11. Direction artistique
+## 11. Internationalisation (FR / EN)
+
+L'application est disponible en **français** et en **anglais**, avec un
+sélecteur présent dans l'en-tête de toutes les pages.
+
+**Architecture : préfixe d'URL** (`/fr/...`, `/en/...`), via `next-intl`.
+
+| | Préfixe d'URL (retenu) | Cookie seul (écarté) |
+|---|---|---|
+| Indexation | Les deux langues indexables | Une seule version indexée |
+| Partage d'un lien | La langue est transmise | Le destinataire voit sa propre langue |
+| `hreflang` | Possible | Impossible |
+
+Le coût est un remaniement de l'arborescence (`app/[locale]/...`), mais c'est la
+méthode recommandée par Next.js et la seule qui tienne pour le SEO.
+
+**Ce qui est traduit :** toute l'interface — navigation, formulaires, états
+vides, messages d'erreur des Server Actions, validation Zod, metadata, ainsi que
+les **dates** (`Intl.DateTimeFormat` suit la langue : « mardi 15 septembre » /
+« Tuesday 15 September ») et les **pluriels** (`{count, plural, ...}`).
+
+**Points d'implémentation notables :**
+
+- `src/i18n/routing.ts` expose des versions de `Link`, `redirect` et
+  `usePathname` conscientes de la langue : elles posent le préfixe
+  automatiquement, sans écrire `/${locale}/...` partout.
+- Le **proxy** cumule deux rôles : détection de langue (`next-intl`) et
+  aiguillage d'authentification. Les chemins sont comparés **sans** le préfixe
+  (`stripLocale`), sinon chaque règle devrait être dupliquée par langue.
+- Les **Server Actions** redirigent avec `redirectLocalized()` : le `redirect()`
+  standard de Next.js perd le préfixe et renverrait un anglophone sur la version
+  française.
+- Les **schémas Zod** produisent des CLÉS (« emailInvalid »), pas du texte : Zod
+  s'exécute sans connaître la locale. La traduction a lieu dans la Server
+  Action, qui elle la connaît.
+- Les **Client Components** reçoivent leurs libellés en props depuis les Server
+  Components, ou utilisent `useTranslations()` : aucun dictionnaire complet
+  n'est envoyé au navigateur.
+- `sitemap.xml` et les balises `hreflang` déclarent les deux versions comme
+  équivalentes, pas comme du contenu dupliqué.
+
+**Limite assumée :** le CONTENU de la base (noms et descriptions des
+disciplines, noms des salles) reste en français dans les deux langues. Traduire
+ces champs demanderait une table de traductions par entité — hors périmètre
+pour ce projet. Seule l'interface est bilingue.
+
+---
+
+## 12. Direction artistique
 
 **Référence :** le planning imprimé punaisé dans le hall d'un gymnase, et les
 lignes peintes au sol d'un terrain. Trois conséquences concrètes :
@@ -368,7 +416,7 @@ horizontal de 360 px à 1440 px.
 
 ---
 
-## 12. Limites connues
+## 13. Limites connues
 
 - **Pas de liste d'attente** quand une séance est complète : le bouton est
   simplement désactivé.
@@ -384,13 +432,15 @@ horizontal de 360 px à 1440 px.
   développement, non embarqués dans le bundle client.
 - **Tests e2e non isolés** : ils réinitialisent la base (`db:seed`) à chaque
   exécution. À ne pas lancer sur une base contenant des données à conserver.
+- **Le contenu de la base n'est pas traduit** : les noms de disciplines et de
+  salles restent en français en anglais (cf. section 11).
 - **Déploiement non effectué** : le projet tourne en local avec PostgreSQL en
   Docker. Pour Vercel, il faudrait une base managée (Neon/Supabase) et définir
   `DATABASE_URL`, `AUTH_SECRET` et `NEXT_PUBLIC_SITE_URL` dans le dashboard.
 
 ---
 
-## 13. Usage de l'IA
+## 14. Usage de l'IA
 
 **Outils utilisés.** Claude (Claude Code) en assistant de développement, sur
 l'ensemble du projet : cadrage, génération de code, débogage.

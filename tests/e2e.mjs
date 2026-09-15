@@ -17,7 +17,7 @@ console.log("Réinitialisation de la base…");
 execSync("npm run db:seed", { cwd: new URL("..", import.meta.url).pathname, stdio: "ignore" });
 // Petite pause : laisse le serveur de dev reprendre la main après le seed.
 await new Promise(r => setTimeout(r, 3000));
-const BASE="http://localhost:3005";
+const BASE="http://localhost:3005/fr";   // préfixe de langue obligatoire
 const b=await chromium.launch({channel:"chrome"});
 const ctx=await b.newContext({viewport:{width:1280,height:900}});
 let page=await ctx.newPage();
@@ -37,7 +37,7 @@ async function login(email){
   await page.goto(BASE+"/login");
   await page.fill("#email",email);
   await page.fill("#password","Password123!");
-  await Promise.all([page.waitForURL(u=>!u.pathname.startsWith("/login"),{timeout:60000}),page.click('button[type=submit]')]);
+  await Promise.all([page.waitForURL(u=>!u.pathname.endsWith("/login"),{timeout:60000}),page.click('button[type=submit]')]);
 }
 
 console.log("\n— Parcours NOUVEAU MEMBRE (onboarding) —");
@@ -53,7 +53,7 @@ await step("onboarding en 3 étapes + persistance",async()=>{
   await page.selectOption("#plan","premium");
   await page.click('button:has-text("Terminer")');
   try{
-    await page.waitForFunction(()=>location.pathname==="/dashboard",null,{timeout:30000});
+    await page.waitForFunction(()=>/^\/(fr|en)\/dashboard$/.test(location.pathname),null,{timeout:30000});
   }catch(e){
     const txt=await page.locator("body").innerText();
     const site=await page.evaluate(()=>document.querySelector("#preferredSiteId")?.value);
@@ -103,7 +103,7 @@ console.log("\n— Parcours ADMIN —");
 await step("login admin",async()=>{await login("admin@clubsport.fr")});
 await step("accès back-office",async()=>{
   await page.goto(BASE+"/admin");
-  await page.waitForSelector("text=Vue d'ensemble",{timeout:20000});
+  await page.waitForSelector("text=ensemble",{timeout:20000});
 });
 await step("création d'une séance (CRUD)",async()=>{
   await page.goto(BASE+"/admin/sessions/new");
@@ -157,7 +157,7 @@ await step("reconnexion possible après session invalidée",async()=>{
   await page.waitForSelector("#email",{timeout:20000});
   await page.fill("#email","membre@clubsport.fr");
   await page.fill("#password","Password123!");
-  await Promise.all([page.waitForURL(u=>!u.pathname.startsWith("/login"),{timeout:60000}),page.click('button[type=submit]')]);
+  await Promise.all([page.waitForURL(u=>!u.pathname.endsWith("/login"),{timeout:60000}),page.click('button[type=submit]')]);
 });
 
 console.log("\n— Responsive —");

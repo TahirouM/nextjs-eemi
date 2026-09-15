@@ -1,8 +1,9 @@
 "use server";
 
-import { redirect } from "next/navigation";
+
 
 import { prisma } from "@/lib/prisma";
+import { redirectLocalized, translateFieldErrors, tValidation } from "@/lib/errors";
 import { hashPassword, verifyPassword, getCurrentUser } from "@/lib/auth";
 import {
   clearSessionCookie,
@@ -12,7 +13,7 @@ import {
   signSessionToken,
   verifySessionToken,
 } from "@/lib/session";
-import { fieldErrors, loginSchema, registerSchema } from "@/lib/validation";
+import { loginSchema, registerSchema } from "@/lib/validation";
 
 /**
  * Server Actions d'authentification.
@@ -53,13 +54,13 @@ export async function registerAction(
     confirmPassword: formData.get("confirmPassword"),
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
 
   const { firstName, lastName, email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return { errors: { email: "Un compte existe déjà avec cet email" } };
+    return { errors: { email: await tValidation("emailTaken") } };
   }
 
   const user = await prisma.user.create({
@@ -78,7 +79,7 @@ export async function registerAction(
   await startSession(user.id);
   // Un compte fraîchement créé n'est pas encore un utilisateur du produit :
   // on l'envoie vers l'onboarding, pas vers le dashboard.
-  redirect("/onboarding");
+  return await redirectLocalized("/onboarding");
 }
 
 export async function loginAction(
@@ -90,7 +91,7 @@ export async function loginAction(
     password: formData.get("password"),
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
@@ -98,7 +99,7 @@ export async function loginAction(
 
   // Message volontairement identique dans les deux cas : ne pas révéler
   // quels emails existent en base.
-  const invalid = { errors: { _form: "Email ou mot de passe incorrect" } };
+  const invalid = { errors: { _form: await tValidation("badCredentials") } };
   if (!user) return invalid;
 
   const ok = await verifyPassword(parsed.data.password, user.passwordHash);
@@ -107,8 +108,8 @@ export async function loginAction(
   await startSession(user.id);
 
   const next = safeNext(formData.get("next"));
-  if (next) redirect(next);
-  redirect(user.onboarded ? "/dashboard" : "/onboarding");
+  if (next) await redirectLocalized(next);
+  return await redirectLocalized(user.onboarded ? "/dashboard" : "/onboarding");
 }
 
 export async function logoutAction() {
@@ -122,15 +123,15 @@ export async function logoutAction() {
     }
   }
   await clearSessionCookie();
-  redirect("/");
+  return await redirectLocalized("/");
 }
 
 /** Déconnecte toutes les autres sessions (page Sécurité des réglages). */
 export async function logoutEverywhereAction() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) return await redirectLocalized("/login");
 
   await prisma.authSession.deleteMany({ where: { userId: user.id } });
   await clearSessionCookie();
-  redirect("/login?message=sessions-closed");
+  return await redirectLocalized("/login?message=sessions-closed");
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import type { Role } from "@prisma/client";
 
 /**
@@ -11,29 +11,50 @@ import type { Role } from "@prisma/client";
  * l'onglet courant demande de connaître l'URL affichée, ce qu'un Server
  * Component ne peut pas savoir après une navigation côté client.
  *
- * L'onglet actif est signalé par un trait épais sous le libellé ET par
- * `aria-current` : l'information ne repose pas uniquement sur la couleur.
+ * Les libellés sont passés en props par le layout (Server Component) : les
+ * traductions sont ainsi résolues côté serveur, et ce composant n'embarque
+ * aucun dictionnaire.
+ *
+ * `usePathname` vient de `@/i18n/routing` : il renvoie le chemin SANS le
+ * préfixe de langue, donc la comparaison avec `/dashboard` fonctionne dans les
+ * deux langues sans code supplémentaire.
+ *
+ * L'onglet actif est signalé par un trait épais ET par `aria-current` :
+ * l'information ne repose pas uniquement sur la couleur.
  *
  * Le lien « Administration » est masqué pour les membres, mais c'est un
  * confort visuel : la vraie protection est dans le layout du groupe (admin),
- * côté serveur. Taper l'URL à la main ne donne aucun accès.
+ * côté serveur.
  */
-export function AppNav({ role }: { role: Role }) {
+export function AppNav({
+  role,
+  labels,
+}: {
+  role: Role;
+  labels: {
+    home: string;
+    book: string;
+    mySessions: string;
+    settings: string;
+    admin: string;
+    ariaLabel: string;
+  };
+}) {
   const pathname = usePathname();
 
   const links = [
-    { href: "/dashboard", label: "Accueil" },
-    { href: "/sessions", label: "Réserver" },
-    { href: "/bookings", label: "Mes séances" },
-    { href: "/settings", label: "Réglages" },
+    { href: "/dashboard", label: labels.home },
+    { href: "/sessions", label: labels.book },
+    { href: "/bookings", label: labels.mySessions },
+    { href: "/settings", label: labels.settings },
     ...(role === "ADMIN" || role === "COACH"
-      ? [{ href: "/admin", label: "Administration" }]
+      ? [{ href: "/admin", label: labels.admin }]
       : []),
-  ];
+  ] as const;
 
   return (
     <nav
-      aria-label="Navigation de l'espace membre"
+      aria-label={labels.ariaLabel}
       className="mx-auto -mb-px max-w-6xl overflow-x-auto px-4"
     >
       <ul className="flex gap-6">

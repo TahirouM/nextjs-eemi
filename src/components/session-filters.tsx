@@ -1,7 +1,10 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+
+import { usePathname, useRouter } from "@/i18n/routing";
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import { Select } from "@/components/ui";
 
@@ -23,6 +26,7 @@ export function SessionFilters({
   sites: Array<{ id: string; name: string; city: string }>;
   activities: Array<{ id: string; name: string }>;
 }) {
+  const t = useTranslations("sessions");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,14 +53,14 @@ export function SessionFilters({
     >
       <div>
         <label htmlFor="filter-site" className="mb-1 block text-sm font-medium">
-          Salle
+          {t("filterRoom")}
         </label>
         <Select
           id="filter-site"
           value={searchParams.get("siteId") ?? ""}
           onChange={(e) => update("siteId", e.target.value)}
         >
-          <option value="">Toutes les salles</option>
+          <option value="">{t("allRooms")}</option>
           {sites.map((site) => (
             <option key={site.id} value={site.id}>
               {site.name} — {site.city}
@@ -67,14 +71,14 @@ export function SessionFilters({
 
       <div>
         <label htmlFor="filter-activity" className="mb-1 block text-sm font-medium">
-          Discipline
+          {t("filterDiscipline")}
         </label>
         <Select
           id="filter-activity"
           value={searchParams.get("activityId") ?? ""}
           onChange={(e) => update("activityId", e.target.value)}
         >
-          <option value="">Toutes les disciplines</option>
+          <option value="">{t("allDisciplines")}</option>
           {activities.map((activity) => (
             <option key={activity.id} value={activity.id}>
               {activity.name}

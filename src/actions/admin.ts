@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { redirect } from "next/navigation";
+
 import type { MembershipStatus, Role } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { redirectLocalized, translateFieldErrors, tBooking, tValidation } from "@/lib/errors";
 import { requireAdmin } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/queries";
-import { fieldErrors, sessionFormSchema } from "@/lib/validation";
+import { sessionFormSchema } from "@/lib/validation";
 import type { FormState } from "@/actions/profile";
 import type { ActionState } from "@/actions/bookings";
 
@@ -33,15 +34,15 @@ export async function createSessionAction(
     notes: formData.get("notes") ?? "",
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
   const data = parsed.data;
 
   const [activity, site] = await Promise.all([
     prisma.activity.findUnique({ where: { id: data.activityId } }),
     prisma.site.findUnique({ where: { id: data.siteId } }),
   ]);
-  if (!activity) return { errors: { activityId: "Activité inconnue" } };
-  if (!site) return { errors: { siteId: "Site inconnu" } };
+  if (!activity) return { errors: { activityId: await tValidation("unknownActivity") } };
+  if (!site) return { errors: { siteId: await tValidation("unknownSite") } };
 
   const startsAt = new Date(data.startsAt);
   const endsAt = new Date(startsAt.getTime() + data.durationMin * 60_000);
@@ -67,7 +68,7 @@ export async function createSessionAction(
   // rechargement suivant (« read-your-own-writes »).
   updateTag(CACHE_TAGS.activities);
 
-  redirect(`/admin/sessions/${created.id}?created=1`);
+  return await redirectLocalized(`/admin/sessions/${created.id}?created=1`);
 }
 
 /** Annule une séance et libère toutes ses réservations. */
@@ -79,13 +80,13 @@ export async function cancelSessionAction(
 
   const sessionId = formData.get("sessionId");
   if (typeof sessionId !== "string" || !sessionId) {
-    return { error: "Séance introuvable." };
+    return { error: await tBooking("sessionNotFound") };
   }
 
   const session = await prisma.session.findUnique({ where: { id: sessionId } });
-  if (!session) return { error: "Séance introuvable." };
+  if (!session) return { error: await tBooking("sessionNotFound") };
   if (session.status === "CANCELLED") {
-    return { error: "Cette séance est déjà annulée." };
+    return { error: await tBooking("alreadyCancelledSession") };
   }
 
   await prisma.$transaction([
@@ -106,7 +107,7 @@ export async function cancelSessionAction(
   revalidatePath("/bookings");
   updateTag(CACHE_TAGS.activities);
 
-  return { ok: true, message: "Séance annulée et inscriptions libérées." };
+  return { ok: true, message: await tBooking("sessionCancelledFreed") };
 }
 
 /** Change le statut d'adhésion : c'est le levier de suspension d'un membre. */
@@ -125,11 +126,11 @@ export async function updateMembershipStatusAction(
     typeof status !== "string" ||
     !allowed.includes(status as MembershipStatus)
   ) {
-    return { error: "Requête invalide." };
+    return { error: await tValidation("invalidRequest") };
   }
 
   if (userId === admin.id) {
-    return { error: "Vous ne pouvez pas modifier votre propre adhésion." };
+    return { error: await tBooking("cannotEditOwnMembership") };
   }
 
   const membership = await prisma.membership.findFirst({
@@ -153,7 +154,7 @@ export async function updateMembershipStatusAction(
   revalidatePath("/admin/members");
   revalidatePath(`/admin/members/${userId}`);
 
-  return { ok: true, message: "Adhésion mise à jour." };
+  return { ok: true, message: await tBooking("membershipUpdated") };
 }
 
 /** Promotion / rétrogradation d'un utilisateur. */
@@ -172,13 +173,13 @@ export async function updateUserRoleAction(
     typeof role !== "string" ||
     !allowed.includes(role as Role)
   ) {
-    return { error: "Requête invalide." };
+    return { error: await tValidation("invalidRequest") };
   }
 
   // Garde-fou : un admin qui se rétrograde lui-même perdrait l'accès au
   // back-office sans moyen de revenir en arrière depuis l'interface.
   if (userId === admin.id) {
-    return { error: "Vous ne pouvez pas modifier votre propre rôle." };
+    return { error: await tBooking("cannotEditOwnRole") };
   }
 
   await prisma.user.update({
@@ -189,5 +190,5 @@ export async function updateUserRoleAction(
   revalidatePath("/admin/members");
   revalidatePath(`/admin/members/${userId}`);
 
-  return { ok: true, message: "Rôle mis à jour." };
+  return { ok: true, message: await tBooking("roleUpdated") };
 }

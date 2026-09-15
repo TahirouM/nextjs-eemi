@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { tBooking } from "@/lib/errors";
 import { requireOnboardedUser, requireStaff } from "@/lib/auth";
 
 /**
@@ -34,7 +35,7 @@ export async function bookSessionAction(
   const sessionId = formData.get("sessionId");
 
   if (typeof sessionId !== "string" || !sessionId) {
-    return { error: "Séance introuvable." };
+    return { error: await tBooking("sessionNotFound") };
   }
 
   try {
@@ -80,16 +81,17 @@ export async function bookSessionAction(
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
-    const messages: Record<string, string> = {
-      NOT_FOUND: "Cette séance n'existe plus.",
-      NOT_BOOKABLE: "Cette séance a été annulée.",
-      PAST: "Cette séance est déjà passée.",
-      NO_MEMBERSHIP:
-        "Votre adhésion n'est pas active. Contactez l'accueil du club.",
-      ALREADY_BOOKED: "Vous êtes déjà inscrit à cette séance.",
-      FULL: "Cette séance est complète.",
+    // Chaque cas d'échec a sa clé de traduction : le membre doit comprendre
+    // POURQUOI sa réservation est refusée, pas seulement qu'elle a échoué.
+    const keys: Record<string, string> = {
+      NOT_FOUND: "sessionGone",
+      NOT_BOOKABLE: "sessionCancelled",
+      PAST: "sessionPast",
+      NO_MEMBERSHIP: "noMembership",
+      ALREADY_BOOKED: "alreadyBooked",
+      FULL: "full",
     };
-    return { error: messages[code] ?? "La réservation a échoué. Réessayez." };
+    return { error: await tBooking(keys[code] ?? "failed") };
   }
 
   // Rafraîchit les écrans qui affichent cette donnée (places restantes,
@@ -99,7 +101,7 @@ export async function bookSessionAction(
   revalidatePath("/bookings");
   revalidatePath("/dashboard");
 
-  return { ok: true, message: "Réservation confirmée." };
+  return { ok: true, message: await tBooking("confirmed") };
 }
 
 export async function cancelBookingAction(
@@ -110,7 +112,7 @@ export async function cancelBookingAction(
   const bookingId = formData.get("bookingId");
 
   if (typeof bookingId !== "string" || !bookingId) {
-    return { error: "Réservation introuvable." };
+    return { error: await tBooking("bookingNotFound") };
   }
 
   const booking = await prisma.booking.findUnique({
@@ -122,16 +124,16 @@ export async function cancelBookingAction(
   // membre connecté pourrait annuler la réservation d'un autre en envoyant
   // un identifiant deviné.
   if (!booking || booking.userId !== user.id) {
-    return { error: "Réservation introuvable." };
+    return { error: await tBooking("bookingNotFound") };
   }
   if (booking.status === "CANCELLED") {
-    return { error: "Cette réservation est déjà annulée." };
+    return { error: await tBooking("alreadyCancelled") };
   }
   if (booking.status === "ATTENDED") {
-    return { error: "Une séance déjà pointée ne peut plus être annulée." };
+    return { error: await tBooking("attendedCannotCancel") };
   }
   if (booking.session.startsAt <= new Date()) {
-    return { error: "Trop tard : la séance a commencé." };
+    return { error: await tBooking("tooLate") };
   }
 
   await prisma.booking.update({
@@ -144,7 +146,7 @@ export async function cancelBookingAction(
   revalidatePath("/sessions");
   revalidatePath(`/sessions/${booking.session.id}`);
 
-  return { ok: true, message: "Réservation annulée." };
+  return { ok: true, message: await tBooking("cancelled") };
 }
 
 /**
@@ -162,14 +164,14 @@ export async function checkInAction(
   const present = formData.get("present") === "true";
 
   if (typeof bookingId !== "string" || !bookingId) {
-    return { error: "Réservation introuvable." };
+    return { error: await tBooking("bookingNotFound") };
   }
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     select: { id: true, sessionId: true },
   });
-  if (!booking) return { error: "Réservation introuvable." };
+  if (!booking) return { error: await tBooking("bookingNotFound") };
 
   await prisma.booking.update({
     where: { id: bookingId },
@@ -183,6 +185,6 @@ export async function checkInAction(
 
   return {
     ok: true,
-    message: present ? "Présence enregistrée." : "Absence enregistrée.",
+    message: present ? await tBooking("presentRecorded") : await tBooking("absentRecorded"),
   };
 }

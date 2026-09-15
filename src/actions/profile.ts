@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+
 
 import { prisma } from "@/lib/prisma";
+import { redirectLocalized, translateFieldErrors, tBooking, tValidation } from "@/lib/errors";
 import {
   hashPassword,
   requireOnboardedUser,
@@ -11,7 +12,6 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import {
-  fieldErrors,
   onboardingSchema,
   passwordSchema,
   preferencesSchema,
@@ -44,7 +44,7 @@ export async function completeOnboardingAction(
     reminderOptIn: formData.get("reminderOptIn") === "on",
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
   const data = parsed.data;
 
   // Le site vient d'une liste déroulante, mais on revérifie son existence :
@@ -53,7 +53,7 @@ export async function completeOnboardingAction(
     where: { id: data.preferredSiteId },
     select: { id: true },
   });
-  if (!site) return { errors: { preferredSiteId: "Site inconnu" } };
+  if (!site) return { errors: { preferredSiteId: await tValidation("unknownSite") } };
 
   const endsAt = new Date();
   endsAt.setFullYear(endsAt.getFullYear() + 1);
@@ -90,7 +90,7 @@ export async function completeOnboardingAction(
   });
 
   revalidatePath("/dashboard");
-  redirect("/dashboard?welcome=1");
+  return await redirectLocalized("/dashboard?welcome=1");
 }
 
 export async function updateProfileAction(
@@ -105,7 +105,7 @@ export async function updateProfileAction(
     phone: formData.get("phone") ?? "",
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
 
   await prisma.user.update({
     where: { id: user.id },
@@ -119,7 +119,7 @@ export async function updateProfileAction(
   revalidatePath("/settings");
   revalidatePath("/dashboard");
 
-  return { ok: true, message: "Profil mis à jour." };
+  return { ok: true, message: await tBooking("profileUpdated") };
 }
 
 export async function updatePreferencesAction(
@@ -134,13 +134,13 @@ export async function updatePreferencesAction(
     reminderOptIn: formData.get("reminderOptIn") === "on",
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
 
   const site = await prisma.site.findUnique({
     where: { id: parsed.data.preferredSiteId },
     select: { id: true },
   });
-  if (!site) return { errors: { preferredSiteId: "Site inconnu" } };
+  if (!site) return { errors: { preferredSiteId: await tValidation("unknownSite") } };
 
   await prisma.user.update({
     where: { id: user.id },
@@ -154,7 +154,7 @@ export async function updatePreferencesAction(
   revalidatePath("/settings");
   revalidatePath("/sessions");
 
-  return { ok: true, message: "Préférences enregistrées." };
+  return { ok: true, message: await tBooking("preferencesSaved") };
 }
 
 export async function updatePasswordAction(
@@ -169,23 +169,23 @@ export async function updatePasswordAction(
     confirmPassword: formData.get("confirmPassword"),
   });
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { errors: await translateFieldErrors(parsed.error) };
 
   const record = await prisma.user.findUnique({
     where: { id: user.id },
     select: { passwordHash: true },
   });
-  if (!record) return { errors: { _form: "Compte introuvable." } };
+  if (!record) return { errors: { _form: await tValidation("accountNotFound") } };
 
   // On exige le mot de passe actuel : un cookie volé ne doit pas suffire
   // à verrouiller le compte de la victime.
   const ok = await verifyPassword(parsed.data.currentPassword, record.passwordHash);
-  if (!ok) return { errors: { currentPassword: "Mot de passe actuel incorrect" } };
+  if (!ok) return { errors: { currentPassword: await tValidation("currentPasswordWrong") } };
 
   await prisma.user.update({
     where: { id: user.id },
     data: { passwordHash: await hashPassword(parsed.data.newPassword) },
   });
 
-  return { ok: true, message: "Mot de passe modifié." };
+  return { ok: true, message: await tBooking("passwordChanged") };
 }
