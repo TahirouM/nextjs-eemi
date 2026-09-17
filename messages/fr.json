@@ -52,7 +52,17 @@
     "ctaText": "Deux formules, sans frais d’inscription. Vous choisissez la vôtre au moment de créer votre compte.",
     "ctaButton": "Créer mon compte",
     "comparePlans": "Comparer les formules",
-    "minutes": "{count} min"
+    "minutes": "{count} min",
+    "heroImageAlt": "Le gymnase du club, parquet et lignes de jeu, éclairé par les fenêtres hautes",
+    "heroKicker": "Trois salles en Île-de-France",
+    "disciplinesIntro": "Chaque séance est encadrée par un coach du club, en petit groupe. Les places restantes sont à jour à chaque chargement.",
+    "activityImageAlt": "Une séance de {name} dans une salle du club",
+    "siteImageAlt": "La salle {name}",
+    "whereIntro": "La même adhésion ouvre les trois salles. Vous choisissez votre salle de référence à l’inscription, vous en changez quand vous voulez.",
+    "coachedBy": "Encadré",
+    "smallGroups": "Petit groupe",
+    "noCommitment": "Sans frais d’inscription",
+    "howImageAlt": "Un coach échange avec les participants au début d’une séance"
   },
   "activities": {
     "metaTitle": "Disciplines",
@@ -91,7 +101,8 @@
     "mobileTitle": "Bientôt sur mobile",
     "mobileIntro": "L’application ClubSport pour iOS et Android exploitera deux capacités que le web ne peut pas offrir :",
     "mobileNfc": "chaque salle dispose d’une borne à l’entrée (identifiant ci-dessus). Approcher son téléphone pointera la présence en une seconde, sans passer par l’accueil. Le champ qui trace la provenance du pointage existe déjà en base.",
-    "mobileGeo": "les séances seront triées par distance réelle depuis la position du téléphone, pour proposer d’abord la salle où l’on se trouve. Les coordonnées de chaque salle sont déjà stockées et utilisées pour ce calcul."
+    "mobileGeo": "les séances seront triées par distance réelle depuis la position du téléphone, pour proposer d’abord la salle où l’on se trouve. Les coordonnées de chaque salle sont déjà stockées et utilisées pour ce calcul.",
+    "geoLabel": "Géolocalisation"
   },
   "pricing": {
     "metaTitle": "Tarifs",
@@ -114,7 +125,8 @@
     "rowGuest": "Invitation d’un proche",
     "unlimited": "illimité",
     "days": "{count} jours",
-    "oncePerMonth": "1 par mois"
+    "oncePerMonth": "1 par mois",
+    "heroImageAlt": "Un cours collectif en salle, encadré par un coach"
   },
   "faq": {
     "metaTitle": "Questions fréquentes",
@@ -168,7 +180,8 @@
     "haveAccount": "Vous avez déjà un compte ?",
     "signInLink": "Se connecter",
     "logout": "Déconnexion",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "demoHint": "Cliquez un compte pour remplir le formulaire."
   },
   "onboarding": {
     "metaTitle": "Finaliser mon inscription",

@@ -1,48 +1,39 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { ButtonLink, Panel, PageHeader } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
 
-export const metadata: Metadata = {
-  title: "Questions fréquentes",
-  description:
-    "Adhésion, réservation, annulation, présence : les réponses aux questions les plus posées sur ClubSport.",
-  alternates: { canonical: "/faq" },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "faq" });
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    alternates: { canonical: `/${locale}/faq` },
+  };
+}
 
-const faq = [
-  {
-    q: "Comment réserver une séance ?",
-    a: "Une fois votre compte créé et votre onboarding terminé, rendez-vous dans « Réserver ». Filtrez par salle ou par discipline, puis cliquez sur la séance qui vous intéresse. Les places restantes sont affichées en temps réel.",
-  },
-  {
-    q: "Jusqu'à quand puis-je annuler ?",
-    a: "Vous pouvez annuler librement tant que la séance n'a pas commencé. Passé l'heure de début, l'annulation n'est plus possible et la séance apparaît dans votre historique.",
-  },
-  {
-    q: "Que se passe-t-il si une séance est complète ?",
-    a: "Le bouton de réservation est désactivé et la séance est marquée « Complet ». Il n'y a pas encore de liste d'attente : c'est une limite connue de cette version.",
-  },
-  {
-    q: "Comment ma présence est-elle enregistrée ?",
-    a: "Le coach valide la présence des inscrits depuis son espace, au début de la séance. Votre historique et vos statistiques se mettent à jour immédiatement.",
-  },
-  {
-    q: "Puis-je changer de salle ?",
-    a: "Oui. Votre salle par défaut est choisie à l'onboarding, mais votre adhésion donne accès aux trois salles. Vous pouvez modifier votre salle de référence à tout moment dans vos réglages.",
-  },
-  {
-    q: "Mon adhésion peut-elle être suspendue ?",
-    a: "Une adhésion peut être suspendue par l'administration du club. Tant qu'elle n'est pas active, la réservation de nouvelles séances est bloquée — vos réservations existantes restent visibles.",
-  },
-  {
-    q: "Une application mobile est-elle prévue ?",
-    a: "Oui. Une application React Native est prévue, avec le pointage de présence par NFC à l'entrée de la salle et le classement des séances par distance réelle grâce à la géolocalisation.",
-  },
-];
+/**
+ * Les sept questions sont numérotées dans les fichiers de messages (`q1`/`a1`
+ * … `q7`/`a7`). On génère les clés plutôt que de les répéter : ajouter une
+ * question revient à ajouter la paire dans `messages/` et à incrémenter cette
+ * constante.
+ */
+const QUESTION_COUNT = 7;
 
-export default async function FaqPage() {
+export default async function FaqPage({ params }: PageProps<"/[locale]">) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const t = await getTranslations("faq");
+
+  const faq = Array.from({ length: QUESTION_COUNT }, (_, i) => ({
+    q: t(`q${i + 1}` as "q1"),
+    a: t(`a${i + 1}` as "a1"),
+  }));
+
   /*
     JSON-LD : décrit la FAQ dans un format que les moteurs de recherche
     comprennent, ce qui permet l'affichage enrichi dans les résultats.
@@ -59,48 +50,53 @@ export default async function FaqPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="mx-auto max-w-3xl px-4 py-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <PageHeader
-        title={t("title")}
-        description={t("description")}
-      />
+      <header className="max-w-2xl">
+        <h1 className="font-display text-[clamp(2.25rem,5.5vw,3.5rem)] font-bold leading-[1.02] tracking-tight text-balance">
+          {t("title")}
+        </h1>
+        <p className="mt-5 text-lg leading-relaxed text-pretty text-ink-soft">
+          {t("description")}
+        </p>
+      </header>
 
-      <div className="space-y-3">
+      {/*
+        Les questions sont posées sur des filets, sans encadré : une FAQ est
+        une liste, pas sept objets distincts. Le trait sous chaque question
+        suffit à les séparer, et la page reste calme.
+      */}
+      <div className="mt-14 border-t border-rule">
         {faq.map((item) => (
-          <Panel key={item.q} className="p-0">
+          <details key={item.q} className="group border-b border-rule">
             {/* <details> natif : ouverture/fermeture sans une ligne de JS. */}
-            <details className="group">
-              <summary className="cursor-pointer list-none p-5 font-medium">
-                <span className="flex items-center justify-between gap-4">
-                  {item.q}
-                  <span
-                    aria-hidden="true"
-                    className="text-ink-soft transition-transform duration-200 group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </span>
-              </summary>
-              <p className="px-5 pb-5 text-sm text-ink-soft">{item.a}</p>
-            </details>
-          </Panel>
+            <summary className="flex cursor-pointer list-none items-baseline justify-between gap-6 py-5 font-display text-lg font-medium transition-colors duration-150 hover:text-accent">
+              {item.q}
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-xl leading-none text-ink-soft transition-transform duration-200 group-open:rotate-45"
+              >
+                +
+              </span>
+            </summary>
+            <p className="max-w-prose pb-6 text-pretty leading-relaxed text-ink-soft">
+              {item.a}
+            </p>
+          </details>
         ))}
       </div>
 
-      <Panel className="mt-10 text-center">
-        <p className="font-medium">{t("moreTitle")}</p>
-        <p className="mt-1 text-sm text-ink-soft">
-          L&apos;équipe du club répond sur place, dans les trois salles.
-        </p>
-        <ButtonLink href="/salles" variant="secondary" className="mt-4">
-          Voir les salles
+      <div className="mt-14 border-t-2 border-ink pt-6">
+        <p className="font-display text-lg font-semibold">{t("moreTitle")}</p>
+        <p className="mt-1.5 text-ink-soft">{t("moreText")}</p>
+        <ButtonLink href="/salles" variant="secondary" className="mt-5">
+          {t("seeRooms")}
         </ButtonLink>
-      </Panel>
+      </div>
     </div>
   );
 }

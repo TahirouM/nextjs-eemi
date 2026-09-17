@@ -52,7 +52,17 @@
     "ctaText": "Two plans, no joining fee. You pick yours when you create your account.",
     "ctaButton": "Create my account",
     "comparePlans": "Compare plans",
-    "minutes": "{count} min"
+    "minutes": "{count} min",
+    "heroImageAlt": "The club sports hall, wooden floor and court lines, lit by high windows",
+    "heroKicker": "Three gyms across Île-de-France",
+    "disciplinesIntro": "Every session is led by a club coach, in a small group. Remaining spots are up to date on every page load.",
+    "activityImageAlt": "A {name} session in one of the club gyms",
+    "siteImageAlt": "The {name} gym",
+    "whereIntro": "One membership opens all three gyms. Pick your home gym when you sign up, change it whenever you like.",
+    "coachedBy": "Coach-led",
+    "smallGroups": "Small groups",
+    "noCommitment": "No joining fee",
+    "howImageAlt": "A coach talking with participants at the start of a session"
   },
   "activities": {
     "metaTitle": "Classes",
@@ -91,7 +101,8 @@
     "mobileTitle": "Coming to mobile",
     "mobileIntro": "The ClubSport app for iOS and Android will use two capabilities the web cannot offer:",
     "mobileNfc": "each gym has a terminal at the entrance (identifier above). Tapping your phone marks you present in a second, with no need to stop at the desk. The field that records how a check-in happened already exists in the database.",
-    "mobileGeo": "sessions will be sorted by real distance from your phone’s position, so the gym you are standing in comes first. Each gym’s coordinates are already stored and used for that calculation."
+    "mobileGeo": "sessions will be sorted by real distance from your phone’s position, so the gym you are standing in comes first. Each gym’s coordinates are already stored and used for that calculation.",
+    "geoLabel": "Geolocation"
   },
   "pricing": {
     "metaTitle": "Pricing",
@@ -114,7 +125,8 @@
     "rowGuest": "Guest pass",
     "unlimited": "unlimited",
     "days": "{count} days",
-    "oncePerMonth": "1 per month"
+    "oncePerMonth": "1 per month",
+    "heroImageAlt": "A coach-led group class in one of the gyms"
   },
   "faq": {
     "metaTitle": "Frequently asked questions",
@@ -168,7 +180,8 @@
     "haveAccount": "Already have an account?",
     "signInLink": "Log in",
     "logout": "Log out",
-    "signOut": "Log out"
+    "signOut": "Log out",
+    "demoHint": "Click an account to fill in the form."
   },
   "onboarding": {
     "metaTitle": "Finish signing up",
