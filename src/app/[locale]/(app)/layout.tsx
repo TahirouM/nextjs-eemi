@@ -40,8 +40,15 @@ export default async function AppLayout({
 
       <header className="glass sticky top-0 z-40 border-b border-rule">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+          {/*
+            Le logo ramène au SITE PUBLIC, pas au tableau de bord : c'est la
+            convention du web (cliquer la marque revient à l'accueil), et
+            l'onglet « Accueil » juste en dessous couvre déjà le retour au
+            tableau de bord. Sans cela, un adhérent connecté n'avait aucun
+            chemin vers les pages publiques.
+          */}
           <Link
-            href="/dashboard"
+            href="/"
             className="font-display text-lg font-bold tracking-tight"
           >
             ClubSport

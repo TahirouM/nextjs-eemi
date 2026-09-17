@@ -1,5 +1,12 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import Link from "next/link";
+/*
+  `Link` vient de `@/i18n/routing`, pas de `next/link` : il préfixe
+  automatiquement la locale courante. Avec `next/link`, un `href="/dashboard"`
+  partait sans préfixe — le middleware rattrapait le coup par une redirection,
+  mais au prix d'un aller-retour serveur, et un visiteur anglophone pouvait
+  retomber en français.
+*/
+import { Link } from "@/i18n/routing";
 
 /**
  * Primitives d'interface.
