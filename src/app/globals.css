@@ -69,6 +69,12 @@
   --stop-wash: rgb(163 43 33 / 0.12);
 }
 
+/*
+  Palette sombre — conservée mais INACTIVE sur le site public : le layout pose
+  `data-theme="light"` sur <html>, ce qui neutralise ce bloc. Elle reste écrite
+  ici parce que les jetons sont complets et testés ; réactiver le thème sombre
+  ne demande que de retirer cet attribut.
+*/
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;

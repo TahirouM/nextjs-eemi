@@ -81,11 +81,13 @@ export async function generateMetadata({
   };
 }
 
+/*
+  Le site est servi en thème clair uniquement (voir `data-theme` sur <html>),
+  donc une seule couleur de barre d'adresse : en annoncer deux ferait teinter
+  le navigateur en sombre alors que la page reste claire.
+*/
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#14161a" },
-  ],
+  themeColor: "#f4f6fa",
 };
 
 export default async function LocaleLayout({
@@ -102,8 +104,16 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
+    /*
+      `data-theme="light"` fige le thème clair. Le bloc sombre de `globals.css`
+      est gardé par `:root:not([data-theme="light"])` : cet attribut le
+      neutralise, y compris chez un visiteur dont le système est en mode
+      sombre. C'est un choix de direction artistique — les photos des salles et
+      le verre translucide sont calibrés sur le fond clair.
+    */
     <html
       lang={locale}
+      data-theme="light"
       className={`${archivo.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
