@@ -1,80 +1,65 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Link } from "@/i18n/routing";
 import { Alert } from "@/components/ui";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = {
-  title: "Connexion",
-  description: "Connectez-vous à votre espace membre ClubSport.",
-  // Les pages d'authentification n'ont aucun intérêt dans les résultats de
-  // recherche : on demande explicitement leur désindexation.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/login">): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "auth" });
+  return {
+    title: t("loginTitle"),
+    description: t("loginMeta"),
+    // Les pages d'authentification n'ont aucun intérêt dans les résultats de
+    // recherche : on demande explicitement leur désindexation.
+    robots: { index: false, follow: false },
+  };
+}
 
-export default async function LoginPage({ searchParams }: PageProps<"/[locale]/login">) {
-  const params = await searchParams;
-  const next = typeof params.next === "string" ? params.next : undefined;
-  const message = typeof params.message === "string" ? params.message : undefined;
+export default async function LoginPage({
+  params,
+  searchParams,
+}: PageProps<"/[locale]/login">) {
+  const [{ locale }, query] = await Promise.all([params, searchParams]);
+  setRequestLocale(locale);
+
+  const t = await getTranslations("auth");
+
+  const next = typeof query.next === "string" ? query.next : undefined;
+  const message = typeof query.message === "string" ? query.message : undefined;
 
   return (
     <div>
       <h1 className="font-display text-3xl font-bold tracking-tight text-balance">
-        Connexion
+        {t("loginTitle")}
       </h1>
-      <p className="mt-2 mb-7 text-ink-soft">
-        Retrouvez votre planning et vos réservations.
-      </p>
+      <p className="mt-2 mb-7 text-ink-soft">{t("loginSubtitle")}</p>
 
       {message === "sessions-closed" && (
         <div className="mb-5">
-          <Alert tone="success">
-            Toutes vos sessions ont été fermées. Reconnectez-vous.
-          </Alert>
+          <Alert tone="success">{t("sessionsClosed")}</Alert>
         </div>
       )}
 
+      {/*
+        Le formulaire porte aussi les comptes de démonstration : les remplir
+        demande d'écrire dans ses champs, donc les deux vivent dans le même
+        Client Component.
+      */}
       <LoginForm next={next} />
 
       <p className="mt-7 border-t border-rule pt-5 text-sm text-ink-soft">
-        Pas encore de compte ?{" "}
+        {t("noAccount")}{" "}
         <Link
           href="/register"
           className="font-medium text-accent underline-offset-4 hover:underline"
         >
-          Rejoindre le club
+          {t("joinClub")}
         </Link>
       </p>
-
-      {/* Comptes de démonstration : exigés dans les livrables du brief. */}
-      <details className="mt-6 rounded-sm border border-rule bg-surface-sunk">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-          Comptes de démonstration
-        </summary>
-        <div className="border-t border-rule px-4 py-3 text-sm">
-          <dl className="space-y-1.5">
-            {[
-              ["membre@clubsport.fr", "membre"],
-              ["coach@clubsport.fr", "coach"],
-              ["admin@clubsport.fr", "administrateur"],
-              ["nouveau@clubsport.fr", "onboarding à faire"],
-            ].map(([email, role]) => (
-              <div key={email} className="flex flex-wrap justify-between gap-x-4">
-                <dt className="font-mono text-xs" translate="no">
-                  {email}
-                </dt>
-                <dd className="text-xs text-ink-soft">{role}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-3 border-t border-rule pt-2.5 text-xs text-ink-soft">
-            Mot de passe commun :{" "}
-            <span className="font-mono" translate="no">
-              Password123!
-            </span>
-          </p>
-        </div>
-      </details>
     </div>
   );
 }
