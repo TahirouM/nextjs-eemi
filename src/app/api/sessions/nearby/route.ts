@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getCurrentUser } from "@/lib/auth";
+import { requireApiUser } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { distanceKm } from "@/lib/format";
 
@@ -21,19 +21,12 @@ export async function GET(request: NextRequest) {
   // On n'utilise PAS `requireOnboardedUser()` ici : cette fonction fait un
   // `redirect()`, ce qui renverrait une 307 vers /login. Un client mobile
   // attend un code d'erreur exploitable, pas une page HTML de connexion.
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
-  }
-  if (!user.onboarded) {
-    return NextResponse.json(
-      { error: "Onboarding non terminé." },
-      { status: 403 },
-    );
-  }
+  // `requireApiUser` accepte le cookie de session (navigateur) ET l'en-tête
+  // `Authorization: Bearer` (application mobile), et vérifie l'onboarding.
+  // Il renvoie une réponse d'erreur JSON plutôt qu'un `redirect()` : un client
+  // mobile attend un code d'erreur exploitable, pas une page HTML.
+  const auth = await requireApiUser(request);
+  if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = request.nextUrl;
   const lat = Number(searchParams.get("lat"));
