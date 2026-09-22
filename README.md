@@ -393,10 +393,27 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 gh repo create mon-clubsport --public --source=. --push
 
 vercel login
+vercel link              # rattache le dossier au projet Vercel
+vercel git connect       # relie le projet AU DÉPÔT : sans ça, rien ne se déploie tout seul
+```
+
+Une fois le dépôt connecté, **tout push sur `main` déclenche un déploiement de
+production**, et chaque branche ou pull request obtient sa propre URL de
+prévisualisation.
+
+`vercel git connect` est l'étape qu'on oublie, et son absence est silencieuse :
+le code part bien sur GitHub, le site public reste inchangé, et rien ne le
+signale. Pour vérifier que le lien tient, comparez la date du dernier
+déploiement (`vercel ls`) avec celle du dernier commit.
+
+Un déploiement manuel reste possible sans passer par Git :
+
+```bash
 vercel deploy --prod
 ```
 
-Les migrations s'appliquent automatiquement : le script `vercel-build` exécute
+Les migrations s'appliquent automatiquement dans les deux cas : Vercel préfère
+le script `vercel-build` quand il existe, et celui-ci exécute
 `prisma generate && prisma migrate deploy && next build`.
 
 ### 4. Comptes de démonstration en production
