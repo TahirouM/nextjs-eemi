@@ -59,7 +59,10 @@ const bodySchema = z.object({
   method: z.enum(["qr", "nfc", "simulated", "manual"]).default("qr"),
 });
 
-/** Rayon toléré entre la position déclarée et la salle, en kilomètres. */
+/**
+ * Rayon toléré entre la position déclarée et la salle, en kilomètres.
+ * Ne s'applique qu'aux sites dont `requiresProximity` est vrai.
+ */
 const MAX_DISTANCE_KM = 1;
 
 /** Fenêtre de tolérance autour de l'heure de début, en minutes. */
@@ -89,7 +92,13 @@ export async function POST(request: NextRequest) {
 
   const site = await prisma.site.findUnique({
     where: { nfcTagId: parsed.data.nfcTagId },
-    select: { id: true, name: true, latitude: true, longitude: true },
+    select: {
+      id: true,
+      name: true,
+      latitude: true,
+      longitude: true,
+      requiresProximity: true,
+    },
   });
   if (!site) {
     return NextResponse.json(
@@ -98,16 +107,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Cohérence QR + GPS : un code photographié et présenté ailleurs est rejeté.
-  // C'est le croisement des deux signaux qui rend le pointage difficile à
-  // falsifier — ni le code seul, ni la position seule n'y suffisent. Le QR
-  // étant, par nature, plus facile à recopier qu'une puce NFC, cette
-  // vérification de position compte davantage qu'avant.
+  /*
+    Cohérence QR + GPS : un code photographié et présenté ailleurs est rejeté.
+    C'est le croisement des deux signaux qui rend le pointage difficile à
+    falsifier — ni le code seul, ni la position seule n'y suffisent. Le QR
+    étant, par nature, plus facile à recopier qu'une puce NFC, cette
+    vérification compte plus encore qu'au temps du NFC.
+
+    Deux décisions distinctes, à ne pas confondre :
+
+      MESURER la distance  -> dès que le téléphone envoie sa position. La
+                              valeur part dans la réponse et dans le journal
+                              de l'app, même quand elle ne bloque rien.
+      REFUSER sur distance -> seulement si la salle l'exige
+                              (`requiresProximity`).
+
+    Une salle à `false` accepte donc un pointage de loin, mais la distance
+    reste enregistrée : on renonce à refuser, pas à savoir. C'est ce qui
+    permet au club de constater après coup qu'un pointage vient d'ailleurs.
+  */
   const { latitude, longitude } = parsed.data;
   let measuredDistanceKm: number | null = null;
   if (latitude !== undefined && longitude !== undefined) {
     measuredDistanceKm = distanceKm({ latitude, longitude }, site);
-    if (measuredDistanceKm > MAX_DISTANCE_KM) {
+
+    if (site.requiresProximity && measuredDistanceKm > MAX_DISTANCE_KM) {
       return NextResponse.json(
         {
           error: `Vous semblez à ${measuredDistanceKm.toFixed(1)} km de ${site.name}. Rapprochez-vous de la borne.`,

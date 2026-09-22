@@ -102,9 +102,27 @@ model Site {
   postalCode String
   latitude  Float
   longitude Float
-  /// Identifiant de la borne NFC installée à l'entrée du site.
-  /// La future app React Native lira ce tag pour pointer la présence.
+  /// Identifiant de la borne installée à l'entrée du site. L'app React Native
+  /// le lit en scannant le QR code de l'affiche pour pointer la présence.
+  /// (Le nom date de la version NFC : l'identifiant désigne LA BORNE, seule la
+  /// façon de le lire a changé. Renommer imposerait une migration et casserait
+  /// les clients déjà déployés pour un gain cosmétique.)
   nfcTagId  String? @unique
+
+  /// Le pointage exige-t-il que le téléphone soit PRÈS de la salle ?
+  ///
+  /// Par défaut oui : c'est le second facteur du pointage. Un QR code se
+  /// photographie — contrairement à une puce NFC — donc sans contrôle de
+  /// position, une photo de l'affiche suffirait à pointer depuis chez soi.
+  ///
+  /// À `false`, le QR devient le SEUL facteur pour ce site. Réservé aux salles
+  /// où la vérification gêne plus qu'elle ne protège : démonstration à
+  /// distance, salle en sous-sol sans réception GPS, ou site de test. Le choix
+  /// est par salle et modifiable en base, donc réversible sans redéploiement.
+  ///
+  /// Dans tous les cas la position reste MESURÉE et tracée quand le téléphone
+  /// la fournit : on renonce à refuser, pas à savoir.
+  requiresProximity Boolean @default(true)
 
   sessions       Session[]
   preferredBy    User[]    @relation("PreferredSite")

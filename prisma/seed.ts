@@ -22,7 +22,18 @@ async function main() {
   await prisma.site.deleteMany();
 
   console.log("Sites…");
-  const [bastille, nation, montreuil] = await Promise.all([
+  /*
+    Les salles parisiennes forment le club « réel » : elles exigent la
+    proximité, donc un pointage y suppose d'être sur place.
+
+    Les deux salles lyonnaises servent au TEST et sont marquées
+    `requiresProximity: false` : elles acceptent un pointage à distance. Cela
+    permet de dérouler le parcours complet — scan, validation serveur,
+    présence enregistrée — depuis n'importe où, sans se rendre à Lyon. La
+    distance reste mesurée et tracée, simplement elle ne bloque plus.
+  */
+  const [bastille, nation, montreuil, lyonPartDieu, lyonConfluence] =
+    await Promise.all([
     prisma.site.create({
       data: {
         slug: "paris-bastille",
@@ -57,6 +68,33 @@ async function main() {
         latitude: 48.8624,
         longitude: 2.4433,
         nfcTagId: "nfc-montreuil-entree",
+      },
+    }),
+    prisma.site.create({
+      data: {
+        slug: "lyon-part-dieu",
+        name: "ClubSport Lyon Part-Dieu",
+        address: "17 rue du Docteur Bouchut",
+        city: "Lyon",
+        postalCode: "69003",
+        latitude: 45.7605,
+        longitude: 4.8572,
+        nfcTagId: "nfc-lyon-part-dieu-entree",
+        // Salle de test : pointage possible sans être sur place.
+        requiresProximity: false,
+      },
+    }),
+    prisma.site.create({
+      data: {
+        slug: "lyon-confluence",
+        name: "ClubSport Lyon Confluence",
+        address: "112 cours Charlemagne",
+        city: "Lyon",
+        postalCode: "69002",
+        latitude: 45.7405,
+        longitude: 4.8180,
+        nfcTagId: "nfc-lyon-confluence-entree",
+        requiresProximity: false,
       },
     }),
   ]);
@@ -114,6 +152,22 @@ async function main() {
     "MEMBER",
     bastille.id,
   );
+  const coachLyon = await createUser(
+    "coach.lyon@clubsport.fr",
+    "Élodie",
+    "Fontaine",
+    "COACH",
+    lyonPartDieu.id,
+  );
+  // Membre rattaché à Lyon : permet de tester le pointage sans toucher au
+  // compte parisien, dont l'historique sert aux captures d'écran.
+  const memberLyon = await createUser(
+    "membre.lyon@clubsport.fr",
+    "Karim",
+    "Benali",
+    "MEMBER",
+    lyonPartDieu.id,
+  );
   const member2 = await createUser(
     "membre2@clubsport.fr",
     "Thomas",
@@ -146,6 +200,10 @@ async function main() {
       { userId: coach2.id, plan: "premium", status: "ACTIVE", endsAt: inOneYear },
       { userId: member.id, plan: "standard", status: "ACTIVE", endsAt: inOneYear },
       { userId: member2.id, plan: "standard", status: "PENDING", endsAt: inOneYear },
+      { userId: coachLyon.id, plan: "premium", status: "ACTIVE", endsAt: inOneYear },
+      // ACTIVE : une adhésion inactive interdit la réservation, donc le
+      // pointage. Ce compte doit pouvoir dérouler le parcours de bout en bout.
+      { userId: memberLyon.id, plan: "standard", status: "ACTIVE", endsAt: inOneYear },
     ],
   });
 
@@ -206,6 +264,33 @@ async function main() {
         level: "all",
         siteId: montreuil.id,
       },
+      {
+        slug: "crossfit-lyon",
+        name: "CrossFit",
+        description:
+          "Circuit fonctionnel en petit groupe, charges adaptées à chacun. Salle de test lyonnaise.",
+        durationMin: 60,
+        level: "all",
+        siteId: lyonPartDieu.id,
+      },
+      {
+        slug: "yoga-lyon",
+        name: "Yoga doux",
+        description:
+          "Postures tenues et respiration, fin de journée. Salle de test lyonnaise.",
+        durationMin: 60,
+        level: "all",
+        siteId: lyonPartDieu.id,
+      },
+      {
+        slug: "aviron-lyon",
+        name: "Aviron indoor",
+        description:
+          "Travail d'endurance sur ergomètre, face à la Saône. Salle de test lyonnaise.",
+        durationMin: 45,
+        level: "all",
+        siteId: lyonConfluence.id,
+      },
     ].map((a) => prisma.activity.create({ data: a })),
   );
 
@@ -234,6 +319,46 @@ async function main() {
     }
   }
 
+  /*
+    Séances lyonnaises. Elles ne suivent pas la boucle ci-dessus parce que
+    l'heure y est calculée en MINUTES depuis maintenant, et non à heure fixe :
+    le pointage n'est accepté que dans une fenêtre de ±30 minutes autour du
+    début. Une séance « à 9 h » n'est donc testable qu'à 9 h.
+
+    Ces trois-là sont posées autour de l'instant du seed, ce qui rend le
+    parcours immédiatement testable : on relance `db:seed` et on peut pointer
+    dans la foulée.
+  */
+  const lyonPlan: Array<{
+    slug: string;
+    minutesFromNow: number;
+    coachId: string;
+    capacity: number;
+    why: string;
+  }> = [
+    {
+      slug: "crossfit-lyon",
+      minutesFromNow: 5,
+      coachId: coachLyon.id,
+      capacity: 12,
+      why: "commence dans 5 min : cas nominal, pointage accepté",
+    },
+    {
+      slug: "yoga-lyon",
+      minutesFromNow: -10,
+      coachId: coachLyon.id,
+      capacity: 15,
+      why: "a commencé il y a 10 min : le retardataire peut encore pointer",
+    },
+    {
+      slug: "aviron-lyon",
+      minutesFromNow: 180,
+      coachId: coachLyon.id,
+      capacity: 10,
+      why: "dans 3 h : hors fenêtre, démontre le refus NO_BOOKING",
+    },
+  ];
+
   const sessions = [];
   for (const p of plan) {
     const activity = byslug[p.slug];
@@ -249,6 +374,28 @@ async function main() {
           endsAt,
           capacity: p.capacity,
           status: p.day < 0 ? "DONE" : "SCHEDULED",
+        },
+      }),
+    );
+  }
+
+  const lyonSessions: Awaited<ReturnType<typeof prisma.session.create>>[] = [];
+  for (const p of lyonPlan) {
+    const activity = byslug[p.slug];
+    const startsAt = new Date(Date.now() + p.minutesFromNow * 60_000);
+    const endsAt = new Date(startsAt.getTime() + activity.durationMin * 60_000);
+    lyonSessions.push(
+      await prisma.session.create({
+        data: {
+          activityId: activity.id,
+          siteId: activity.siteId,
+          coachId: p.coachId,
+          startsAt,
+          endsAt,
+          capacity: p.capacity,
+          // SCHEDULED même pour celle qui a déjà commencé : le pointage exige
+          // ce statut, et la séance est effectivement en cours.
+          status: "SCHEDULED",
         },
       }),
     );
@@ -287,12 +434,37 @@ async function main() {
     });
   }
 
+  /*
+    Le membre lyonnais est inscrit aux TROIS séances : sans réservation dans
+    la salle scannée, le serveur refuse le pointage (NO_BOOKING). C'est ce qui
+    rend le parcours testable immédiatement après le seed.
+  */
+  for (const s of lyonSessions) {
+    await prisma.booking.create({
+      data: { userId: memberLyon.id, sessionId: s.id, status: "BOOKED" },
+    });
+  }
+
+  console.log("\nSalles de test lyonnaises (pointage sans contrainte de distance)");
+  console.table(
+    lyonPlan.map((p, i) => ({
+      activité: byslug[p.slug].name,
+      borne: [lyonPartDieu, lyonConfluence].find(
+        (site) => site.id === byslug[p.slug].siteId,
+      )?.nfcTagId,
+      début: lyonSessions[i].startsAt.toLocaleTimeString("fr-FR"),
+      cas: p.why,
+    })),
+  );
+
   console.log("\nComptes de démonstration (mot de passe : Password123!)");
   console.table([
     { email: "admin@clubsport.fr", role: "ADMIN" },
     { email: "coach@clubsport.fr", role: "COACH" },
     { email: "membre@clubsport.fr", role: "MEMBER" },
     { email: "nouveau@clubsport.fr", role: "MEMBER (onboarding à faire)" },
+    { email: "membre.lyon@clubsport.fr", role: "MEMBER (salles de test Lyon)" },
+    { email: "coach.lyon@clubsport.fr", role: "COACH (Lyon)" },
   ]);
 }
 
