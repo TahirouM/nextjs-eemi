@@ -564,21 +564,37 @@ async function main() {
   }
 
   /*
-    Le membre démo est inscrit à TOUTES les séances de la salle : sans
-    réservation, le serveur refuse le pointage (NO_BOOKING). Comme chaque
-    pointage consomme une séance (passage en ATTENDED), cette réserve de
-    plusieurs mois permet de répéter la démonstration sans jamais reseeder.
+    TOUS les comptes membres sont inscrits à TOUTES les séances de la salle
+    de démonstration : sans réservation, le serveur refuse le pointage
+    (NO_BOOKING). Comme chaque pointage en consomme une (passage en ATTENDED),
+    cette réserve permet de répéter la démonstration sans jamais reseeder.
+
+    Pourquoi tous les comptes et pas seulement le membre lyonnais : une borne
+    « qui marche toujours » qui ne marche que pour UN compte ne tient pas sa
+    promesse. Quiconque scanne l'affiche avec le compte de démonstration
+    évident (membre@clubsport.fr) tombait sur « Aucune réservation à valider »
+    — le message décrit alors une règle métier normale, ce qui donne
+    l'impression d'un bug alors que tout fonctionne.
+
+    `nouveau@clubsport.fr` est volontairement exclu : ce compte démontre le
+    parcours d'onboarding, et le serveur le bloque avant même d'examiner une
+    réservation. Lui en créer n'aurait donc aucun effet.
   */
+  const demoAttendees = [memberLyon, member, member2];
+
   await prisma.booking.createMany({
-    data: demoSessions.map((session) => ({
-      userId: memberLyon.id,
-      sessionId: session.id,
-      status: "BOOKED" as const,
-    })),
+    data: demoSessions.flatMap((session) =>
+      demoAttendees.map((user) => ({
+        userId: user.id,
+        sessionId: session.id,
+        status: "BOOKED" as const,
+      })),
+    ),
   });
 
   console.log(
-    `  ${demoSessions.length} séances de démonstration, réservées d'avance`,
+    `  ${demoSessions.length} séances de démonstration, réservées d'avance ` +
+      `pour ${demoAttendees.length} comptes`,
   );
 
   console.log("\nSalles de test lyonnaises (pointage sans contrainte de distance)");
