@@ -295,7 +295,10 @@
     "noneHistoryText": "Past sessions appear here once your coach has marked you present.",
     "seePlanning": "See the timetable",
     "checkedInNfc": "Attendance confirmed by NFC tap",
-    "checkedInWeb": "Attendance confirmed on site"
+    "checkedInWeb": "Attendance confirmed on site",
+    "checkedInQr": "Attendance confirmed by QR scan",
+    "checkedInSimulated": "Attendance confirmed in demo mode",
+    "checkedInManual": "Attendance confirmed by typed code"
   },
   "settings": {
     "metaTitle": "Settings",
@@ -427,7 +430,18 @@
     "page": "Page {page} of {pageCount} · {total, plural, one {# result} other {# results}}",
     "previous": "Previous",
     "next": "Next",
-    "pagination": "Pagination"
+    "pagination": "Pagination",
+    "qrNav": "QR posters",
+    "qrTitle": "QR posters",
+    "qrDescription": "One poster per site, to print and display at the entrance. Members scan it from the app to check in.",
+    "qrPrint": "Print posters",
+    "qrInstructions": "Scan this code from the ClubSport app to confirm your attendance.",
+    "qrTagLabel": "Station code:",
+    "qrAppName": "ClubSport",
+    "qrNoSite": "No poster to print",
+    "qrNoSiteText": "No site has a station identifier on record.",
+    "qrMissingTitle": "Sites without a station identifier",
+    "qrMissingText": "These sites have no station identifier yet: no poster can be generated, and check-in is impossible there."
   },
   "status": {
     "booked": "Booked",

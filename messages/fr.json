@@ -295,7 +295,10 @@
     "noneHistoryText": "Vos séances passées apparaîtront ici une fois votre présence validée par le coach.",
     "seePlanning": "Voir le planning",
     "checkedInNfc": "Présence validée par badge NFC",
-    "checkedInWeb": "Présence validée sur place"
+    "checkedInWeb": "Présence validée sur place",
+    "checkedInQr": "Présence validée par QR code",
+    "checkedInSimulated": "Présence validée en mode démonstration",
+    "checkedInManual": "Présence validée par saisie du code"
   },
   "settings": {
     "metaTitle": "Réglages",
@@ -427,7 +430,18 @@
     "page": "Page {page} sur {pageCount} · {total, plural, one {# résultat} other {# résultats}}",
     "previous": "Précédent",
     "next": "Suivant",
-    "pagination": "Pagination"
+    "pagination": "Pagination",
+    "qrNav": "Bornes QR",
+    "qrTitle": "Bornes QR",
+    "qrDescription": "Une affiche par salle, à imprimer et à poser à l’entrée. Les membres la scannent depuis l’application pour valider leur présence.",
+    "qrPrint": "Imprimer les affiches",
+    "qrInstructions": "Scannez ce code depuis l’application ClubSport pour valider votre présence.",
+    "qrTagLabel": "Code de la borne :",
+    "qrAppName": "ClubSport",
+    "qrNoSite": "Aucune borne à imprimer",
+    "qrNoSiteText": "Aucune salle du club n’a d’identifiant de borne enregistré.",
+    "qrMissingTitle": "Salles sans identifiant de borne",
+    "qrMissingText": "Ces salles n’ont pas encore d’identifiant de borne : aucune affiche ne peut être générée, et le pointage y est impossible."
   },
   "status": {
     "booked": "Réservée",

@@ -79,6 +79,7 @@ export default async function AdminLayout({
             overview: t("overview"),
             sessions: t("sessions"),
             members: t("members"),
+            qr: t("qrNav"),
             ariaLabel: t("adminNav"),
           }}
         />

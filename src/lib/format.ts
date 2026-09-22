@@ -98,6 +98,27 @@ export const sessionStatusKey: Record<SessionStatus, string> = {
   DONE: "done",
 };
 
+/**
+ * Provenance d'un pointage -> clé de traduction.
+ *
+ * Volontairement exhaustif plutôt que binaire : la feuille de présence doit
+ * dire COMMENT une présence a été validée. Une présence obtenue en mode
+ * démonstration ou par saisie du code ne doit pas s'afficher comme un scan
+ * réel, sans quoi le club ne peut plus distinguer un test d'une vraie venue.
+ *
+ * `nfc` est conservé pour les lignes historiques : l'application est passée au
+ * QR code, mais les présences déjà enregistrées gardent leur provenance réelle.
+ * Une valeur inconnue retombe sur `checkedInWeb`, le cas du pointage fait par
+ * le coach depuis le back-office.
+ */
+export const checkInMethodKey: Record<string, string> = {
+  qr: "checkedInQr",
+  nfc: "checkedInNfc",
+  simulated: "checkedInSimulated",
+  manual: "checkedInManual",
+  web: "checkedInWeb",
+};
+
 export const roleKey: Record<string, string> = {
   MEMBER: "member",
   COACH: "coach",

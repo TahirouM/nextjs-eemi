@@ -266,3 +266,64 @@ select {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+  Impression.
+
+  La seule page réellement destinée au papier est le générateur d'affiches QR
+  (/admin/bornes) : ces affiches sont imprimées, plastifiées et posées à
+  l'entrée des salles. Les règles ci-dessous s'appliquent donc globalement mais
+  ne servent qu'à ce cas.
+
+  Trois problèmes à corriger sur une page web imprimée :
+
+    1. le thème sombre vide une cartouche d'encre et rend le QR indécodable —
+       un scanner attend des modules noirs sur fond blanc ;
+    2. la navigation, les en-têtes et les boutons n'ont aucun sens sur papier ;
+    3. un QR coupé entre deux feuilles est définitivement illisible.
+*/
+@media print {
+  /*
+    On force le rendu clair quel que soit le thème de l'écran. `color-scheme`
+    seul ne suffit pas : les jetons de couleur sont redéfinis explicitement.
+  */
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Chrome et Safari suppriment les fonds à l'impression sans cette règle. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Le châssis de l'application n'a pas à être imprimé. */
+  header,
+  nav,
+  footer[role="contentinfo"] {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /*
+    Un QR ne survit pas à une coupure de page : la zone de silence et les
+    motifs de repérage seraient amputés, et aucun décodeur ne rattrape ça.
+  */
+  article {
+    break-inside: avoid;
+  }
+
+  /* Marges de page généreuses : l'affiche doit rester lisible plastifiée. */
+  @page {
+    margin: 16mm;
+  }
+}

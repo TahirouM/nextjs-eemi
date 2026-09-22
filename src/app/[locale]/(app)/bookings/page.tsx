@@ -9,6 +9,7 @@ import { CancelButton } from "@/components/booking-buttons";
 import {
   bookingStatusKey,
   bookingStatusTone,
+  checkInMethodKey,
   formatDate,
   formatTime,
 } from "@/lib/format";
@@ -121,9 +122,10 @@ export default async function BookingsPage({
                   </p>
                   {booking.checkedInAt && (
                     <p className="mt-0.5 text-sm text-ink-soft">
-                      {booking.checkInMethod === "nfc"
-                        ? t("checkedInNfc")
-                        : t("checkedInWeb")}
+                      {t(
+                        checkInMethodKey[booking.checkInMethod ?? "web"] ??
+                          "checkedInWeb",
+                      )}
                     </p>
                   )}
                 </div>
