@@ -32,7 +32,7 @@ async function main() {
     présence enregistrée — depuis n'importe où, sans se rendre à Lyon. La
     distance reste mesurée et tracée, simplement elle ne bloque plus.
   */
-  const [bastille, nation, montreuil, lyonPartDieu, lyonConfluence] =
+  const [bastille, nation, montreuil, lyonPartDieu, lyonConfluence, lyonDemo] =
     await Promise.all([
     prisma.site.create({
       data: {
@@ -94,6 +94,19 @@ async function main() {
         latitude: 45.7405,
         longitude: 4.8180,
         nfcTagId: "nfc-lyon-confluence-entree",
+        requiresProximity: false,
+      },
+    }),
+    prisma.site.create({
+      data: {
+        slug: "lyon-demo",
+        name: "ClubSport Lyon Démo",
+        address: "1 place Bellecour",
+        city: "Lyon",
+        postalCode: "69002",
+        latitude: 45.7578,
+        longitude: 4.8320,
+        nfcTagId: "nfc-lyon-demo-entree",
         requiresProximity: false,
       },
     }),
@@ -291,6 +304,15 @@ async function main() {
         level: "all",
         siteId: lyonConfluence.id,
       },
+      {
+        slug: "demo-permanente",
+        name: "Séance de démonstration",
+        description:
+          "Séance ouverte en continu, destinée à présenter le parcours de pointage. Une nouvelle séance démarre toutes les 5 minutes.",
+        durationMin: 30,
+        level: "all",
+        siteId: lyonDemo.id,
+      },
     ].map((a) => prisma.activity.create({ data: a })),
   );
 
@@ -401,6 +423,102 @@ async function main() {
     );
   }
 
+  /*
+    Salle de démonstration : une séance toutes les 30 minutes, en continu.
+
+    ## Le problème que ça résout
+
+    Le pointage n'est accepté que dans une fenêtre de ±30 minutes autour du
+    début de la séance. Les séances lyonnaises ci-dessus sont calées sur
+    l'instant du seed : elles cessent donc d'être pointables une demi-heure
+    plus tard, et il faut reseeder avant chaque démonstration.
+
+    Ici, les séances se succèdent toutes les 30 minutes sur plusieurs mois.
+    Comme la fenêtre fait elle-même ±30 minutes, il y a TOUJOURS au moins deux
+    séances éligibles, quelle que soit l'heure. Le QR de cette salle marche
+    donc en permanence, sans reseed.
+
+    ## Pourquoi de vraies séances plutôt qu'une exception
+
+    On aurait pu exempter la salle de la contrainte horaire, comme on l'a fait
+    pour la distance. On ne l'a pas fait : la fenêtre horaire est ce qui
+    empêche de pointer une séance du mois prochain. La désactiver rendrait la
+    démonstration MENSONGÈRE — elle montrerait un parcours que le vrai
+    règlement refuse. Ici le serveur applique ses règles habituelles ; c'est
+    l'offre de séances qui est généreuse.
+
+    ## Pourquoi on peut repointer indéfiniment
+
+    Le pointage ne retient que les réservations `BOOKED` ou `CONFIRMED`. Une
+    fois validée, la réservation passe à `ATTENDED` et sort du filtre : la
+    démonstration suivante utilise donc la séance suivante. Le membre est
+    inscrit d'avance à toutes, d'où une réserve de plusieurs mois.
+  */
+  console.log("Séances de démonstration (toutes les 30 min)…");
+
+  /*
+    Pas de 5 minutes, et non 30.
+
+    La fenêtre de pointage fait ±30 minutes : un pas de 30 min ne laisse que
+    DEUX séances éligibles à un instant donné. Or chaque pointage en consomme
+    une (passage en ATTENDED), donc la troisième démonstration d'affilée
+    échouait — constaté en testant, pas supposé.
+
+    À 5 minutes, la fenêtre contient une douzaine de séances : on peut
+    enchaîner les démonstrations, et la réserve se reconstitue d'elle-même à
+    mesure que le temps avance.
+  */
+  const DEMO_STEP_MIN = 5;
+  /** Profondeur du planning de démonstration, en jours (passé et futur). */
+  const DEMO_DAYS_BACK = 1;
+  const DEMO_DAYS_AHEAD = 60;
+
+  const demoActivity = byslug["demo-permanente"];
+  // Aligné sur le pas : un planning à heures rondes se lit mieux dans le
+  // back-office qu'un décalage hérité de la minute exacte du seed.
+  const demoAnchor = new Date();
+  demoAnchor.setSeconds(0, 0);
+  demoAnchor.setMinutes(
+    Math.floor(demoAnchor.getMinutes() / DEMO_STEP_MIN) * DEMO_STEP_MIN,
+  );
+
+  const demoRows: { startsAt: Date; endsAt: Date }[] = [];
+  const firstSlot = new Date(demoAnchor.getTime() - DEMO_DAYS_BACK * 86_400_000);
+  const slotCount =
+    ((DEMO_DAYS_BACK + DEMO_DAYS_AHEAD) * 24 * 60) / DEMO_STEP_MIN;
+
+  for (let i = 0; i < slotCount; i++) {
+    const startsAt = new Date(firstSlot.getTime() + i * DEMO_STEP_MIN * 60_000);
+    demoRows.push({
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + demoActivity.durationMin * 60_000),
+    });
+  }
+
+  /*
+    `createMany` plutôt qu'une boucle de `create` : on insère ici plusieurs
+    milliers de lignes, et autant d'allers-retours réseau rendraient le seed
+    interminable — surtout sur la base de production, qui est distante.
+  */
+  await prisma.session.createMany({
+    data: demoRows.map((r) => ({
+      activityId: demoActivity.id,
+      siteId: lyonDemo.id,
+      coachId: coachLyon.id,
+      startsAt: r.startsAt,
+      endsAt: r.endsAt,
+      capacity: 30,
+      status: "SCHEDULED" as const,
+    })),
+  });
+
+  // Relecture des identifiants : `createMany` ne les renvoie pas, et il en
+  // faut pour créer les réservations.
+  const demoSessions = await prisma.session.findMany({
+    where: { siteId: lyonDemo.id },
+    select: { id: true },
+  });
+
   console.log("Réservations…");
   const now = new Date();
   const past = sessions.filter((s) => s.startsAt < now).slice(-6);
@@ -445,6 +563,24 @@ async function main() {
     });
   }
 
+  /*
+    Le membre démo est inscrit à TOUTES les séances de la salle : sans
+    réservation, le serveur refuse le pointage (NO_BOOKING). Comme chaque
+    pointage consomme une séance (passage en ATTENDED), cette réserve de
+    plusieurs mois permet de répéter la démonstration sans jamais reseeder.
+  */
+  await prisma.booking.createMany({
+    data: demoSessions.map((session) => ({
+      userId: memberLyon.id,
+      sessionId: session.id,
+      status: "BOOKED" as const,
+    })),
+  });
+
+  console.log(
+    `  ${demoSessions.length} séances de démonstration, réservées d'avance`,
+  );
+
   console.log("\nSalles de test lyonnaises (pointage sans contrainte de distance)");
   console.table(
     lyonPlan.map((p, i) => ({
@@ -456,6 +592,16 @@ async function main() {
       cas: p.why,
     })),
   );
+
+  console.log("\nSalle de DÉMONSTRATION — QR toujours valide, à toute heure");
+  console.table([
+    {
+      salle: lyonDemo.name,
+      borne: lyonDemo.nfcTagId,
+      compte: "membre.lyon@clubsport.fr",
+      séances: `une toutes les ${DEMO_STEP_MIN} min, sur ${DEMO_DAYS_AHEAD} jours`,
+    },
+  ]);
 
   console.log("\nComptes de démonstration (mot de passe : Password123!)");
   console.table([
