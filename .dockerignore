@@ -1,0 +1,36 @@
+# Contexte de build Docker : tout ce qui est listé ici n'est PAS envoyé au
+# démon. Un contexte léger accélère le build, et surtout aucun secret ni
+# artefact local ne peut finir dans une image par un `COPY . .`.
+
+# Dépendances et artefacts : reconstruits DANS l'image, pour Linux. Les
+# node_modules du Mac contiennent des binaires macOS (moteur Prisma, SWC).
+node_modules
+.next
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets : injectés au lancement, jamais copiés dans un layer.
+.env
+.env.*
+!.env.example
+
+# Docker lui-même : modifier le Dockerfile n'a pas à invalider le cache du
+# `COPY . .`.
+Dockerfile
+.dockerignore
+compose.yaml
+
+# Outillage et documents inutiles à l'exécution
+.git
+.gitignore
+.vercel
+.vercelignore
+.agents
+.claude
+.vscode
+tests
+docs
+*.pdf
+*.md
+npm-debug.log*
+.DS_Store

@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
-import { getActivities, getActivityBySlug } from "@/lib/queries";
+import { getActivityBySlug } from "@/lib/queries";
 import { Badge, ButtonLink, Panel } from "@/components/ui";
 import { formatDate, formatTime } from "@/lib/format";
 import { activityImage } from "@/lib/images";
@@ -13,22 +13,19 @@ import { activityImage } from "@/lib/images";
 /**
  * Route dynamique publique (`/activites/[slug]`).
  *
- * `generateStaticParams` déclare les six slugs connus : Next.js les rend au
- * build plutôt qu'à la première visite, et un slug inconnu tombe sur le
- * `notFound()` plus bas.
+ * Rendue à la requête, comme toutes les pages publiques : le layout marketing
+ * lit la session pour afficher « Mon espace » ou « Connexion », ce qui rend le
+ * segment dynamique. Énumérer les slugs au build (`generateStaticParams`) ne
+ * produisait donc aucune page statique — le manifeste de pré-rendu le
+ * confirmait — et coûtait une requête en base pendant `next build`, ce qui
+ * empêchait de construire l'image Docker sans base.
  *
- * `revalidate = 300` : la fiche est resservie depuis le cache pendant 5
- * minutes puis régénérée en arrière-plan. C'est le compromis assumé pour cette
- * page — la description de l'activité ne bouge presque jamais, et un planning
- * vieux de quelques minutes reste acceptable pour une page publique, alors que
- * la même donnée est lue sans cache dans l'espace membre où l'on réserve.
+ * Le cache est porté par la donnée, pas par la page : la fiche vient de
+ * `getActivityBySlug` (cache catalogue taggé, invalidé par `updateTag` depuis
+ * le back-office). Seul le planning des prochaines séances est lu sans cache,
+ * pour afficher des places restantes exactes. Un slug inconnu tombe sur le
+ * `notFound()` plus bas.
  */
-export const revalidate = 300;
-
-export async function generateStaticParams() {
-  const activities = await getActivities();
-  return activities.map((a) => ({ slug: a.slug }));
-}
 
 /** Metadata par page : chaque fiche a son propre titre et sa description. */
 export async function generateMetadata({

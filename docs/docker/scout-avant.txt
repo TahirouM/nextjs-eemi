@@ -1,0 +1,224 @@
+    ✓ SBOM of image already cached, 285 packages indexed
+    ...Evaluating policies
+    ✓ Policy evaluation completed
+
+    i Base image was auto-detected. To get more accurate results, build images with max-mode provenance attestations.
+      Review https://docs.docker.com/build/attestations/slsa-provenance/ for more information.
+
+ Target               │  local://clubsport-web:latest  │    2C    14H    12M     1L  
+   digest             │  4231fe2f2d5c                  │                             
+ Base image           │  node:22-alpine                │    1C    13H    12M     1L  
+ Refreshed base image │  node:22-alpine                │    0C    11H     9M     1L  
+                      │                                │    -1     -2     -3         
+ Updated base image   │  node:24-alpine                │    0C     9H    12M     1L  
+                      │                                │    -1     -4                
+
+Policy status  FAILED  (4/7 policies met)
+Health score  C  (56%)
+
+ Status │                     Policy                     │           Results           
+────────┼────────────────────────────────────────────────┼─────────────────────────────
+ ✓      │ Default non-root user                          │                             
+ !      │ Copyleft licensed packages found               │    21 packages              
+ !      │ Fixable critical or high vulnerabilities found │    2C    13H     0M     0L  
+ ✓      │ No high-profile vulnerabilities                │    0C     0H     0M     0L  
+ ✓      │ No outdated base images                        │                             
+ ✓      │ No unapproved base images                      │    0 deviations             
+ !      │ Required supply chain attestations missing     │    2 deviations             
+
+What's next:
+    View policy violations → docker scout policy local://clubsport-web:latest
+    View vulnerabilities → docker scout cves local://clubsport-web:latest
+    View base image update recommendations → docker scout recommendations local://clubsport-web:latest
+    Compare with the latest in the registry → docker scout compare --to-latest local://clubsport-web:latest
+
+    ✓ SBOM of image already cached, 285 packages indexed
+    ✗ Detected 10 vulnerable packages with a total of 15 vulnerabilities
+
+
+## Overview
+
+                   │         Analyzed Image         
+───────────────────┼────────────────────────────────
+ Target            │  local://clubsport-web:latest  
+   digest          │  4231fe2f2d5c                  
+   platform        │ linux/arm64                    
+   vulnerabilities │    2C    14H     0M     0L     
+   size            │ 138 MB                         
+   packages        │ 285                            
+
+
+## Packages and Vulnerabilities
+
+   1C     2H     0M     0L  tar 7.5.11
+pkg:npm/tar@7.5.11
+
+    ✗ CRITICAL CVE-2026-59873 [Allocation of Resources Without Limits or Throttling]
+      https://scout.docker.com/v/CVE-2026-59873?s=github&n=tar&t=npm&vr=%3C%3D7.5.18
+      Affected range : <=7.5.18                                                        
+      Fixed version  : 7.5.19                                                          
+      CVSS Score     : 9.2                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:H 
+    
+    ✗ HIGH CVE-2026-59874 [Loop with Unreachable Exit Condition ('Infinite Loop')]
+      https://scout.docker.com/v/CVE-2026-59874?s=github&n=tar&t=npm&vr=%3C%3D7.5.17
+      Affected range : <=7.5.17                                                        
+      Fixed version  : 7.5.18                                                          
+      CVSS Score     : 8.7                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N 
+    
+    ✗ HIGH CVE-2026-73566 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-73566?s=github&n=tar&t=npm&vr=%3C%3D7.5.20
+      Affected range : <=7.5.20                                     
+      Fixed version  : 7.5.21                                       
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+
+   1C     0H     0M     0L  next 16.3.5
+pkg:npm/next@16.3.5
+
+    ✗ CRITICAL GHSA-vcvr-r3jv-pc5j [Dependency on Vulnerable Third-Party Component]
+      https://scout.docker.com/v/GHSA-vcvr-r3jv-pc5j?s=github&n=next&t=npm&vr=%3E%3D16.2.0%2C%3C16.3.6
+      Affected range : >=16.2.0                                                        
+                     : <16.3.6                                                         
+      Fixed version  : 16.3.6                                                          
+      CVSS Score     : 9.5                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H 
+    
+
+   0C     5H     0M     0L  brace-expansion 2.0.2
+pkg:npm/brace-expansion@2.0.2
+
+    ✗ HIGH CVE-2026-13149 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-13149?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.2
+      Affected range : >=2.0.0                                                                                           
+                     : <2.1.2                                                                                            
+      Fixed version  : 2.1.2                                                                                             
+      CVSS Score     : 7.7                                                                                               
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P/S:N/AU:Y/R:U/V:D/RE:M/U:Amber 
+    
+    ✗ HIGH CVE-2026-69152 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-69152?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.4
+      Affected range : >=2.0.0                                      
+                     : <2.1.4                                       
+      Fixed version  : 2.1.4                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ HIGH CVE-2026-14257 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-14257?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.3
+      Affected range : >=2.0.0                                      
+                     : <2.1.3                                       
+      Fixed version  : 5.0.8                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ HIGH CVE-2026-102278 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-102278?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.6
+      Affected range : >=2.0.0                                      
+                     : <2.1.6                                       
+      Fixed version  : 2.1.6                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ HIGH CVE-2026-102276 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-102276?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.5
+      Affected range : >=2.0.0                                      
+                     : <2.1.5                                       
+      Fixed version  : 2.1.5                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+
+   0C     1H     0M     0L  pacote 19.0.2
+pkg:npm/pacote@19.0.2
+
+    ✗ HIGH CVE-2026-9496 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-9496?s=github&n=pacote&t=npm&vr=%3E%3D11.2.7%2C%3C21.5.1
+      Affected range : >=11.2.7                                                            
+                     : <21.5.1                                                             
+      Fixed version  : 21.5.1                                                              
+      CVSS Score     : 7.7                                                                 
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P 
+    
+
+   0C     1H     0M     0L  ip-address 10.1.0
+pkg:npm/ip-address@10.1.0
+
+    ✗ HIGH CVE-2026-69192 [Improper Input Validation]
+      https://scout.docker.com/v/CVE-2026-69192?s=github&n=ip-address&t=npm&vr=%3C%3D10.3.0
+      Affected range : <=10.3.0                                                        
+      Fixed version  : 10.3.1                                                          
+      CVSS Score     : 7.7                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:H/SI:N/SA:N 
+    
+
+   0C     1H     0M     0L  sigstore 3.1.0
+pkg:npm/sigstore@3.1.0
+
+    ✗ HIGH CVE-2026-48815 [Improper Verification of Cryptographic Signature]
+      https://scout.docker.com/v/CVE-2026-48815?s=github&n=sigstore&t=npm&vr=%3C%3D4.1.0
+      Affected range : <=4.1.0                                      
+      Fixed version  : 4.1.1                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N 
+    
+
+   0C     1H     0M     0L  http-cache-semantics 4.2.0
+pkg:npm/http-cache-semantics@4.2.0
+
+    ✗ HIGH CVE-2026-93748 [Use of Cache Containing Sensitive Information]
+      https://scout.docker.com/v/CVE-2026-93748?s=github&n=http-cache-semantics&t=npm&vr=%3C%3D4.2.0
+      Affected range : <=4.2.0                                                         
+      Fixed version  : not fixed                                                       
+      CVSS Score     : 8.7                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N 
+    
+
+   0C     1H     0M     0L  picomatch 4.0.3
+pkg:npm/picomatch@4.0.3
+
+    ✗ HIGH CVE-2026-33671 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-33671?s=github&n=picomatch&t=npm&vr=%3E%3D4.0.0%2C%3C4.0.4
+      Affected range : >=4.0.0                                      
+                     : <4.0.4                                       
+      Fixed version  : 4.0.4                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+
+   0C     1H     0M     0L  sharp 0.35.4
+pkg:npm/sharp@0.35.4
+
+    ✗ HIGH GHSA-wq5f-xc86-pv6w [Dependency on Vulnerable Third-Party Component]
+      https://scout.docker.com/v/GHSA-wq5f-xc86-pv6w?s=github&n=sharp&t=npm&vr=%3C0.35.5
+      Affected range : <0.35.5                                                         
+      Fixed version  : 0.35.5                                                          
+      CVSS Score     : 8.9                                                             
+      CVSS Vector    : CVSS:4.0/AV:L/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H 
+    
+
+   0C     1H     0M     0L  pacote 20.0.1
+pkg:npm/pacote@20.0.1
+
+    ✗ HIGH CVE-2026-9496 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-9496?s=github&n=pacote&t=npm&vr=%3E%3D11.2.7%2C%3C21.5.1
+      Affected range : >=11.2.7                                                            
+                     : <21.5.1                                                             
+      Fixed version  : 21.5.1                                                              
+      CVSS Score     : 7.7                                                                 
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P 
+    
+
+
+16 vulnerabilities found in 10 packages
+  CRITICAL  2  
+  HIGH      14 
+  MEDIUM    0  
+  LOW       0  
+
+
+What's next:
+    View base image update recommendations → docker scout recommendations local://clubsport-web:latest
+

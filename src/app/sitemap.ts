@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
+import { connection } from "next/server";
 
 import { getActivities } from "@/lib/queries";
 import { routing } from "@/i18n/routing";
+import { buildWithoutDb } from "@/lib/build";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3005";
 
@@ -16,6 +18,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3005";
  * n'ont rien à faire dans un index de moteur.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Image Docker : pas de base au build, le sitemap est lu à la requête.
+  if (buildWithoutDb) await connection();
   const activities = await getActivities();
 
   const staticPaths = [

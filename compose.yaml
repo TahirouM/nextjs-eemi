@@ -1,0 +1,78 @@
+# ClubSport en local, en conditions de production.
+#
+#   docker compose up --build -d                    # base + migrations + app
+#   docker compose --profile seed run --rm seed     # données de démonstration
+#   -> http://localhost:3005
+#
+# Les valeurs ${…} viennent du fichier `.env` à côté de ce fichier (lu par
+# compose pour l'interpolation, jamais copié dans l'image). Voir .env.example.
+
+name: clubsport
+
+x-database-env: &database-env
+  # Dans le réseau compose, la base s'appelle `db` : `localhost` désignerait
+  # le conteneur lui-même, pas la base.
+  DATABASE_URL: postgresql://clubsport:${POSTGRES_PASSWORD:?à définir dans .env}@db:5432/clubsport?schema=public
+  DIRECT_URL: postgresql://clubsport:${POSTGRES_PASSWORD:?à définir dans .env}@db:5432/clubsport?schema=public
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: clubsport
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?à définir dans .env}
+      POSTGRES_DB: clubsport
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clubsport -d clubsport"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Aucun port publié : la base n'est joignable que par les autres services.
+    restart: unless-stopped
+
+  # Conteneur ponctuel : applique les migrations puis s'arrête.
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment: *database-env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Données de démonstration, à la demande uniquement : le seed VIDE la base
+  # avant de la remplir, il ne doit pas tourner à chaque démarrage.
+  seed:
+    build:
+      context: .
+      target: migrator
+    profiles: ["seed"]
+    command: ["npx", "tsx", "prisma/seed.ts"]
+    environment: *database-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3005}
+    image: clubsport-web:latest
+    environment:
+      <<: *database-env
+      AUTH_SECRET: ${AUTH_SECRET:?à définir dans .env (32 caractères minimum)}
+    # hôte:conteneur. 3005 côté hôte : c'est l'adresse que l'app mobile déduit
+    # (IP du Mac sur le Wi-Fi + :3005).
+    ports:
+      - "3005:3005"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  db-data:
