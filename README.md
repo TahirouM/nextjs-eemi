@@ -39,6 +39,16 @@ npm run dev              # http://localhost:3005  (redirige vers /fr)
 > Le port **3005** est utilisé car 3000/3001 étaient occupés sur la machine de
 > développement. Il se change dans `package.json` (`dev` / `start`).
 
+**Variante Docker (image de production, sans Node installé)** — détail en
+[§ 16](#16-docker--image-de-production) :
+
+```bash
+cp .env.example .env     # renseigner AUTH_SECRET et POSTGRES_PASSWORD
+docker compose up --build -d                  # base + migrations + application
+docker compose --profile seed run --rm seed   # données de démonstration
+# -> http://localhost:3005
+```
+
 ### Variables d'environnement
 
 | Variable | Rôle |
@@ -46,6 +56,14 @@ npm run dev              # http://localhost:3005  (redirige vers /fr)
 | `DATABASE_URL` | Chaîne de connexion PostgreSQL |
 | `AUTH_SECRET` | Clé de signature des cookies de session — **32 caractères minimum** |
 | `NEXT_PUBLIC_SITE_URL` | URL publique (metadata, sitemap). Optionnel en local |
+| `DIRECT_URL` | Connexion sans pooler, pour `prisma migrate` (en local : même valeur que `DATABASE_URL`) |
+| `POSTGRES_PASSWORD` | Docker uniquement : mot de passe du service `db` de `compose.yaml` |
+
+> **Attention à `npm start` :** en mode production, Next.js charge
+> `.env.production` s'il existe. Ce fichier local sert à `npm run db:seed:prod`
+> et pointe vers la base **de production** : `npm run build && npm start` sur ce
+> poste se connecte donc à la prod. Pour tester le build de production contre la
+> base locale, utiliser l'image Docker (§ 16).
 
 ### Scripts
 
@@ -131,7 +149,7 @@ transaction (`src/actions/bookings.ts`) :
 ```
 src/app/
 ├─ (marketing)/       public, indexable        — /, /activites, /salles, /tarifs, /faq
-│  └─ activites/[slug]/                        — route dynamique + generateStaticParams
+│  └─ activites/[slug]/                        — route dynamique (cache porté par la donnée)
 ├─ (auth)/            layout épuré             — /login, /register
 ├─ (onboarding)/      aucune échappatoire      — /onboarding
 ├─ (app)/             espace membre protégé    — /dashboard, /sessions, /bookings, /settings
@@ -189,7 +207,7 @@ affiché sur la même page vient du cache : il ne bouge pas.
 | Donnée | Régime | Invalidation |
 |---|---|---|
 | Sites, activités, stats publiques | `unstable_cache` + tag, **1 h en production** | `updateTag()` dans les Server Actions admin |
-| Fiche activité publique | `revalidate = 300` | Régénération en arrière-plan |
+| Fiche activité publique | rendue à la requête (le layout lit la session) ; fiche lue via le cache catalogue, planning sans cache | `updateTag()` côté admin |
 | Planning, réservations, dashboard | **aucun cache** (données utilisateur) | `revalidatePath()` après mutation |
 
 `updateTag` (Next 16) est préféré à `revalidateTag` dans les Server Actions :
@@ -264,34 +282,46 @@ pour les requêtes de planning.
 
 ---
 
-## 9. Continuité mobile — React Native (NFC + géolocalisation)
+## 9. Continuité mobile — React Native (scan QR + géolocalisation)
 
-La future application mobile n'est pas un habillage responsive du site : elle
-exploite deux capacités que le web n'a pas. **Les deux sont déjà préparées côté
-données et exposées en API.**
+L'application mobile (`../ReactNative`) n'est pas un habillage responsive du
+site : elle exploite deux capacités que le web n'a pas, la **caméra** et le
+**GPS**. Elle consomme les Route Handlers de `src/app/api/`, authentifiés par
+jeton Bearer (`src/lib/api-auth.ts`).
 
-### NFC — `POST /api/check-in`
-Chaque salle a une borne à l'entrée (`Site.nfcTagId`). Le téléphone lit le tag
-et le poste ; le serveur retrouve la salle, cherche une réservation du membre
-pour une séance qui commence **dans une fenêtre de ±30 minutes dans cette
-salle**, et valide la présence.
+### Scan QR — `POST /api/check-in`
+Chaque salle a une borne à l'entrée, identifiée par `Site.nfcTagId`. Le
+back-office en imprime l'affiche QR (**Back-office → Bornes QR**,
+`/admin/bornes`), générée côté serveur en SVG par `src/lib/qrcode.ts`, sans
+dépendance ni JavaScript client. Le téléphone scanne l'affiche et poste
+l'identifiant avec sa position ; le serveur retrouve la salle, cherche une
+réservation du membre pour une séance qui commence **dans une fenêtre de ±30
+minutes dans cette salle**, et valide la présence.
 
 C'est robuste parce que **le membre ne choisit pas la séance qu'il valide** :
-c'est le tag physique (donc sa présence réelle sur place) plus la fenêtre
-horaire qui la déterminent. Impossible de pointer depuis chez soi.
+c'est la borne de la salle plus la fenêtre horaire qui la déterminent. Un QR se
+photographie, donc la position est croisée : dans une salle qui l'exige
+(`Site.requiresProximity`, vrai par défaut), un téléphone à plus d'un
+kilomètre est refusé (`TOO_FAR`). La distance est mesurée et renvoyée même
+quand elle ne bloque pas.
+
+Réponses : `UNKNOWN_TAG` (404), `NO_BOOKING` (404), `TOO_FAR` (409),
+`ONBOARDING_REQUIRED` (403), `UNAUTHENTICATED` (401), et 200 avec la
+réservation passée en `ATTENDED`.
 
 Le champ `Booking.checkInMethod` trace la provenance : `"web"` quand le coach
-pointe depuis la feuille de présence, `"nfc"` par cette route. **Testé et
-vérifié en base.**
+pointe depuis la feuille de présence, `"qr"` pour un scan, `"simulated"` /
+`"manual"` pour le mode démonstration et la saisie du code, `"nfc"` pour les
+pointages antérieurs au passage au QR. Liste fermée, validée par Zod.
+
+**Salle de démonstration.** `ClubSport Lyon Démo` (`nfc-lyon-demo-entree`) a
+une séance toutes les 5 minutes, réservée d’avance pour les comptes membres,
+et n'exige pas la proximité : son QR fonctionne à toute heure, depuis
+n'importe où — c'est celui à scanner en soutenance.
 
 ### Géolocalisation — `GET /api/sessions/nearby?lat=&lng=&radius=`
 Renvoie les séances à venir triées par **distance réelle** (formule de
-haversine, `src/lib/format.ts`) depuis la position du téléphone. L'application
-proposera d'abord la salle où l'utilisateur se trouve, puis les plus proches.
-
-Réponse testée : 54 séances dans un rayon de 8 km, la plus proche à 0 km de
-ClubSport Bastille, avec le `nfcTagId` de la salle pour enchaîner sur le
-pointage.
+haversine, `src/lib/format.ts`) depuis la position du téléphone.
 
 ---
 
@@ -304,6 +334,10 @@ pointage.
 
 Les tests utilisent le Chrome installé sur la machine (`channel: "chrome"`) ;
 sinon, `npx playwright install chromium` puis retirer l'option `channel`.
+
+Ils visent `http://localhost:3005` lancé par **`npm run dev`** (base locale de
+`.env`) et réinitialisent la base locale (`db:seed`) en démarrant. Ne pas les
+lancer contre `npm start`, qui lit `.env.production` (voir § 1).
 
 Couverture des tests (`tests/e2e.mjs`) :
 
@@ -566,6 +600,9 @@ horizontal de 360 px à 1440 px.
   exécution. À ne pas lancer sur une base contenant des données à conserver.
 - **Le contenu de la base n'est pas traduit** : les noms de disciplines et de
   salles restent en français en anglais (cf. section 11).
+- **Image Docker sans pré-rendu du sitemap** : construite sans base
+  (`BUILD_WITHOUT_DB=1`, voir § 16), elle sert le sitemap dynamiquement, alors
+  que le build Vercel le pré-rend et le revalide toutes les heures.
 - **Base de production partagée avec la démonstration** : le seed y a été joué
   une fois. Le relancer effacerait les données créées depuis (c'est volontaire :
   il n'est pas rejoué automatiquement au déploiement).
@@ -651,3 +688,185 @@ pourquoi la ligne `AuthSession` en base est nécessaire pour révoquer réelleme
 pourquoi le proxy ne peut pas lire le rôle (Edge runtime, pas de Prisma) et donc
 pourquoi il n'est **pas** la protection, et pourquoi chaque Server Action doit
 refaire sa propre vérification.
+
+**Dockerisation : ce que l'IA a proposé, et ce qui a été vérifié.** Le
+Dockerfile, le `.dockerignore` et le `compose.yaml` ont été écrits avec Claude
+Code, puis chaque choix a été testé (build, lancement, parcours complet,
+scan). Trois points ont été corrigés en route :
+
+1. **Build sans base : première solution fausse, détectée au test.** Pour que
+   `next build` ne touche pas la base, la première proposition faisait
+   renvoyer `[]` au `generateStaticParams` du layout `[locale]`. Le build
+   passait, mais **toutes les pages privées répondaient 500** : sans rien
+   pré-rendre, Next ne voyait plus qu'elles lisent les cookies et les classait
+   statiques. Le manifeste de pré-rendu du build normal a montré que seul le
+   sitemap touche réellement la base au build ; c'est donc le seul qui bascule
+   en rendu à la requête (`src/lib/build.ts`). Au passage, le
+   `generateStaticParams` des fiches activité a été retiré : il ne produisait
+   aucune page statique (le layout public lit la session).
+2. **Scan Scout : la majorité des failles ne venait pas du projet.** Le
+   premier scan (2 critiques, 14 hautes) pointait surtout `tar`,
+   `brace-expansion`, `sigstore`, `pacote`… — les dépendances de **npm et
+   yarn embarqués dans l'image `node`**. Le serveur se lance avec `node`
+   seul : ils sont supprimés de l'étape `runner`. Les deux restantes étaient
+   réelles : `next` 16.3.5 (critique, corrigée en 16.3.6 → montée en 16.3.8)
+   et `sharp` 0.35.4 (forcé en 0.35.5 par `overrides`). Résultat : 0
+   vulnérabilité.
+3. **`HOSTNAME`** : Docker remplit cette variable avec l'identifiant du
+   conteneur, et le serveur standalone l'utilise comme interface d'écoute.
+   Sans `HOSTNAME=0.0.0.0`, le port publié ne répond pas.
+
+Refusé : publier le port 5432 de la base sur l'hôte (inutile, l'application la
+joint par le réseau compose) et passer `AUTH_SECRET` en `ARG` de build (il
+resterait lisible dans l'historique de l'image).
+
+---
+
+## 16. Docker — image de production
+
+L'application Next.js est livrée sous forme d'image Docker de production :
+`Dockerfile`, `.dockerignore`, `compose.yaml` à la racine.
+
+### Lancer
+
+```bash
+cp .env.example .env          # renseigner AUTH_SECRET (32 car. min.) et POSTGRES_PASSWORD
+docker compose up --build -d  # db -> migrate -> app
+docker compose --profile seed run --rm seed   # comptes et séances de démonstration
+open http://localhost:3005
+```
+
+| Service | Image | Rôle |
+|---|---|---|
+| `db` | `postgres:16-alpine` | Base, volume `db-data`, **aucun port publié** |
+| `migrate` | étape `migrator` | `prisma migrate deploy`, puis s'arrête |
+| `seed` | étape `migrator` | Données de démo, **à la demande** (profil `seed`) : il vide la base |
+| `app` | étape `runner` → `clubsport-web` | `node server.js`, port **3005** |
+
+`app` attend que `migrate` se termine avec succès, qui attend que `db` soit
+`healthy` (`pg_isready`). L'image `app` a son propre `HEALTHCHECK`.
+
+Sans compose, avec une base existante :
+
+```bash
+docker build -t clubsport-web --target runner .
+docker run --rm -p 3005:3005 \
+  -e DATABASE_URL="postgresql://…" -e AUTH_SECRET="…" \
+  clubsport-web
+```
+
+`docker compose down` arrête tout ; `docker compose down -v` supprime aussi le
+volume de la base.
+
+### Le Dockerfile, étape par étape
+
+| Étape | Contenu | Pourquoi |
+|---|---|---|
+| `base` | `node:22-alpine` + `openssl` + `apk upgrade` | Version de Node figée, image légère ; OpenSSL requis par le moteur Prisma |
+| `deps` | `COPY package*.json` puis `npm ci --ignore-scripts` | Layer mis en cache tant que les dépendances ne changent pas ; cache npm monté par BuildKit, absent de l'image |
+| `builder` | `COPY . .`, `prisma generate`, `next build` | Compile pour Linux (les `node_modules` du Mac ont des binaires macOS) |
+| `migrator` | `node_modules` complet + `prisma/` | Le CLI Prisma n'est pas dans le serveur standalone |
+| `runner` | `.next/standalone`, `.next/static`, `public` | **Seule étape livrée** : ni code source, ni devDependencies, ni npm |
+
+- **`output: "standalone"`** (`next.config.ts`) : `next build` produit un
+  `server.js` autonome avec les seuls modules réellement importés (image
+  `runner` ≈ 300 Mo, dont l'essentiel est Node lui-même).
+- **Non-root** : `USER node` (uid 1000). Le cache ISR écrit dans `.next/`,
+  d'où le `--chown=node:node` des `COPY`.
+- **`EXPOSE 3005`** documente le port ; c'est `-p 3005:3005` / `ports:` qui le
+  publie sur l'hôte.
+- **`CMD ["node", "server.js"]`** : serveur de production, pas `npm run dev`.
+  Pas de npm intercalé, donc `docker stop` (SIGTERM) atteint Node directement.
+
+### Variables d'environnement et secrets
+
+| Variable | Fournie | Où |
+|---|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | au **lancement** | construites par `compose.yaml` (hôte `db`, pas `localhost`) |
+| `AUTH_SECRET` | au **lancement** | lue dans `.env` par compose |
+| `POSTGRES_PASSWORD` | au **lancement** | lue dans `.env` par compose (obligatoire : `${…:?}`) |
+| `NEXT_PUBLIC_SITE_URL` | au **build** (`ARG`) | inlinée dans le code par Next ; non secrète |
+| `BUILD_WITHOUT_DB=1` | au **build** | interrupteur, voir ci-dessous |
+
+**Aucun secret n'entre dans l'image.** `.env*` est exclu par `.dockerignore`,
+donc aucun `COPY` ne peut l'embarquer, et aucun secret ne passe en `ARG` (les
+valeurs d'`ARG` restent lisibles avec `docker history`). Vérification :
+`docker run --rm --entrypoint sh clubsport-web -c 'ls -a; env'`.
+
+**Build sans base.** Une image se construit une fois et se lance contre
+n'importe quelle base : `docker build` n'a donc pas accès à PostgreSQL. Seul le
+sitemap interrogeait la base au build ; avec `BUILD_WITHOUT_DB=1`, il est rendu
+à la requête (`src/lib/build.ts`). Le reste du site était déjà rendu à la
+requête (le layout lit la session).
+
+### `.dockerignore`
+
+Exclut `node_modules` et `.next` (reconstruits pour Linux dans l'image ; les
+envoyer alourdirait le contexte de plusieurs centaines de Mo et y mettrait des
+binaires macOS), `.env*` (secrets), `.git`, les tests, les PDF et la doc. Le
+`Dockerfile` lui-même en fait partie : le modifier n'invalide pas le cache du
+`COPY . .`.
+
+### Hôte, conteneur, téléphone
+
+```
+iPhone (Wi-Fi) ──► http://<IP du Mac>:3005 ──► Mac : port publié 3005
+                                                   │  -p 3005:3005
+                                                   ▼
+                                    conteneur app : 0.0.0.0:3005 (node server.js)
+                                                   │  réseau compose
+                                                   ▼
+                                    conteneur db : db:5432 (non publié)
+```
+
+`localhost` n'a pas le même sens partout : dans le conteneur `app`, c'est le
+conteneur lui-même (d'où `db:5432`) ; sur l'iPhone, c'est le téléphone (d'où
+l'IP du Mac, `ipconfig getifaddr en0`). L'app mobile déduit cette IP de Metro
+et vise le port 3005 : elle fonctionne indifféremment contre `npm run dev` ou
+contre le conteneur.
+
+### Scan de sécurité — Docker Scout
+
+```bash
+docker scout quickview local://clubsport-web:latest
+docker scout cves local://clubsport-web:latest --only-severity critical,high
+```
+
+Rapports complets : [`docs/docker/scout-avant.txt`](docs/docker/scout-avant.txt)
+et [`docs/docker/scout-apres.txt`](docs/docker/scout-apres.txt).
+
+| | Critiques | Hautes | Moyennes | Basses | Health score |
+|---|---|---|---|---|---|
+| Premier build | 2 | 14 | 12 | 1 | C |
+| Après corrections | **0** | **0** | **0** | **0** | B |
+
+| Vulnérabilité relevée | Origine | Correction |
+|---|---|---|
+| `tar` (1 C, 2 H), `brace-expansion` (5 H), `sigstore`, `pacote`, `ip-address`, `http-cache-semantics` | npm et yarn **fournis par l'image `node`**, inutiles à l'exécution | supprimés de l'étape `runner` |
+| `next` 16.3.5 — GHSA-vcvr-r3jv-pc5j (critique) | dépendance du projet | montée en **16.3.8** |
+| `sharp` 0.35.4 — GHSA-wq5f-xc86-pv6w | dépendance de `next` | `overrides` → **0.35.5** |
+| paquets Alpine | image de base | `apk upgrade` au build |
+
+Ce qui reste signalé, et pourquoi c'est accepté :
+
+- **Paquets sous licence copyleft** (busybox, etc.) : composants système
+  d'Alpine, utilisés sans modification. Point de conformité, pas une
+  vulnérabilité.
+- **Attestations de provenance absentes** : elles s'ajoutent lors d'un push
+  vers un registre (`docker buildx build --provenance=mode=max --sbom=true
+  --push`). L'image n'est construite qu'en local ici.
+- L'image de base `node:22-alpine` publiée a elle-même des CVE ; Scout propose
+  `node:24-alpine`. Le Node 22 de l'image est conservé (version LTS testée avec
+  le projet) : les CVE de la base viennent de npm et yarn, absents de `runner`.
+
+### Vérifications effectuées
+
+- `docker compose build` : build réussi sans base, en 40 s environ (cache
+  froid) ; un changement de code ne rejoue pas `npm ci`.
+- Routes : `/fr`, `/en`, `/fr/salles`, `/fr/activites`, fiche activité,
+  `/sitemap.xml`, `/robots.txt` → 200 ; slug inconnu → 404 ; `/fr/dashboard`
+  sans session → 307 vers `/login`.
+- Parcours mobile contre le conteneur : `POST /api/auth/login` → jeton ;
+  `POST /api/check-in` sur la borne Lyon Démo → 200, réservation `ATTENDED`,
+  `checkInMethod: "qr"` ; borne inconnue → 404 `UNKNOWN_TAG`.
+- Utilisateur d'exécution : `uid=1000(node)` ; conteneur `healthy`.
