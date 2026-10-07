@@ -65,22 +65,25 @@ await step("onboarding en 3 étapes + persistance",async()=>{
 });
 await step("l'onboarding ne se rejoue pas",async()=>{
   await page.goto(BASE+"/onboarding");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
   if(!page.url().includes("/dashboard")) throw new Error("URL="+page.url());
 });
 await step("réservation possible après onboarding",async()=>{
   await page.goto(BASE+"/sessions");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
   const li=page.locator("li",{has:page.locator('button:has-text("Réserver")')}).first();
-  const nom=(await li.innerText()).split("\n")[0];
+  // On compare l'identifiant de la séance (lien /sessions/<id>, présent sur
+  // les deux pages) plutôt que le texte de la ligne : la mise en forme diffère
+  // entre le planning et « Mes séances ».
+  const lien=await li.locator('a[href*="/sessions/"]').first().getAttribute("href");
+  const id=lien.split("/sessions/")[1];
   await li.locator('button:has-text("Réserver")').click();
   // La réservation est confirmée si elle est réellement persistée :
   // on la relit depuis /bookings plutôt que de guetter un message fugace.
   await page.waitForTimeout(4000);
   await page.goto(BASE+"/bookings");
-  await page.waitForLoadState("networkidle");
-  const txt=await page.locator("body").innerText();
-  if(!txt.includes(nom)) throw new Error("réservation absente de /bookings: "+nom);
+  await page.waitForLoadState("load");
+  if(await page.locator(`a[href$="/sessions/${id}"]`).count()===0) throw new Error("réservation absente de /bookings: "+id);
 });
 await step("la réservation survit au rechargement",async()=>{
   await page.goto(BASE+"/bookings");
@@ -88,13 +91,13 @@ await step("la réservation survit au rechargement",async()=>{
 });
 await step("annulation d'une réservation",async()=>{
   await page.goto(BASE+"/bookings");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
   const avant=await page.locator('button:has-text("Annuler")').count();
   if(avant===0) throw new Error("aucune réservation annulable");
   await page.locator('button:has-text("Annuler")').first().click();
   await page.waitForTimeout(4000);
   await page.reload();
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
   const apres=await page.locator('button:has-text("Annuler")').count();
   if(apres>=avant) throw new Error(`annulation non persistée (${avant} -> ${apres})`);
 });
@@ -146,7 +149,7 @@ await step("cookie signé sans session en base : pas de boucle",async()=>{
   // c'est ce que provoque un `db:seed` pendant qu'un onglet reste ouvert.
   execSync(`docker exec eemi-clubsport-db psql -U clubsport -d clubsport -c 'DELETE FROM "AuthSession";'`,{stdio:"ignore"});
   await page.goto(BASE+"/dashboard",{timeout:20000});   // boucle -> throw
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
   if(!page.url().includes("/login")) throw new Error("URL inattendue: "+page.url());
   if(await page.locator("#email").count()===0) throw new Error("formulaire de connexion absent");
   // Le cookie mort doit avoir été retiré par le proxy.
@@ -166,7 +169,7 @@ await step("mobile 390px sans débordement horizontal",async()=>{
   await m.setViewportSize({width:390,height:844});
   for(const p of ["/","/activites","/tarifs","/login"]){
     await m.goto(BASE+p);
-    await m.waitForLoadState("networkidle");
+    await m.waitForLoadState("load");
     const over=await m.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
     if(over) throw new Error("débordement sur "+p);
   }
