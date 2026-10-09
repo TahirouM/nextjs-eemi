@@ -279,7 +279,8 @@
     "alreadyPast": "Cette séance est déjà passée.",
     "yourBooking": "Votre réservation",
     "notFound": "Séance introuvable",
-    "notFoundText": "Cette séance n’existe pas ou a été retirée du planning."
+    "notFoundText": "Cette séance n’existe pas ou a été retirée du planning.",
+    "filterName": "Rechercher par nom"
   },
   "bookings": {
     "metaTitle": "Mes séances",

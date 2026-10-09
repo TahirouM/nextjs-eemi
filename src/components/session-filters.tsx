@@ -3,10 +3,10 @@
 import { useSearchParams } from "next/navigation";
 
 import { usePathname, useRouter } from "@/i18n/routing";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
-import { Select } from "@/components/ui";
+import { Input, Select } from "@/components/ui";
 
 /**
  * Filtres du planning.
@@ -32,6 +32,13 @@ export function SessionFilters({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function onNameChange(value: string) {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => { update("q", value.trim()); }, 30);
+  }
+
   function update(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
@@ -51,6 +58,16 @@ export function SessionFilters({
       data-pending={isPending ? "" : undefined}
       style={{ opacity: isPending ? 0.6 : 1 }}
     >
+      <div>
+        <label htmlFor="filter-name" className="mb-1 block text-sm font-medium">
+          {t("filterName")}
+        </label>
+        <Input
+          id="filter-name"
+          value={searchParams.get("q") ?? ""}
+          onChange={(e) => onNameChange(e.target.value)}
+        />
+      </div>
       <div>
         <label htmlFor="filter-site" className="mb-1 block text-sm font-medium">
           {t("filterRoom")}

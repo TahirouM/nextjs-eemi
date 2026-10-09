@@ -118,6 +118,7 @@ export type SessionFilters = {
   from?: Date;
   page?: number;
   perPage?: number;
+  q?: string;
 };
 
 /** Planning filtrable + paginé. Le filtrage se fait en SQL, pas en mémoire. */
@@ -130,6 +131,9 @@ export async function getUpcomingSessions(filters: SessionFilters = {}) {
     startsAt: { gte: filters.from ?? new Date() },
     ...(filters.siteId ? { siteId: filters.siteId } : {}),
     ...(filters.activityId ? { activityId: filters.activityId } : {}),
+    ...(filters.q
+      ? { activity: { name: { contains: filters.q, mode: "insensitive" as const } } }
+      : {}),
   };
 
   const [sessions, total] = await Promise.all([

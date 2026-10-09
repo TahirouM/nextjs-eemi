@@ -279,7 +279,8 @@
     "alreadyPast": "This session has already taken place.",
     "yourBooking": "Your booking",
     "notFound": "Session not found",
-    "notFoundText": "This session doesn’t exist or was removed from the timetable."
+    "notFoundText": "This session doesn’t exist or was removed from the timetable.",
+    "filterName": "Search by name"
   },
   "bookings": {
     "metaTitle": "My sessions",

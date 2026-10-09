@@ -47,11 +47,12 @@ export default async function SessionsPage({
   const siteId = typeof query.siteId === "string" ? query.siteId : undefined;
   const activityId =
     typeof query.activityId === "string" ? query.activityId : undefined;
+  const q = typeof query.q === "string" ? query.q : undefined;
   const page = Number(query.page) || 1;
 
   const [{ sessions, total, pageCount }, sites, activities, myBookings] =
     await Promise.all([
-      getUpcomingSessions({ siteId, activityId, page }),
+      getUpcomingSessions({ siteId, activityId, q, page }),
       getSites(),
       getActivities(),
       getUserBookings(user.id, "upcoming"),
@@ -173,7 +174,7 @@ export default async function SessionsPage({
             pageCount={pageCount}
             total={total}
             basePath="/sessions"
-            params={{ siteId, activityId }}
+            params={{ siteId, activityId, q }}
           />
         </>
       )}
