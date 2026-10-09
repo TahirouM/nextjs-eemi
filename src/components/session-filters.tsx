@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { usePathname, useRouter } from "@/i18n/routing";
-import { useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import { Input, Select } from "@/components/ui";
@@ -32,11 +32,22 @@ export function SessionFilters({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  // La recherche texte attend une courte pause dans la frappe avant de
+  // réécrire l'URL, au lieu de relancer la requête à chaque touche.
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const q = searchParams.get("q") ?? "";
+
+  // Le champ n'est pas contrôlé (la frappe reste fluide) : on le resynchronise
+  // seulement quand l'URL change d'ailleurs, par exemple « Réinitialiser ».
+  useEffect(() => {
+    const input = nameInput.current;
+    if (input && input.value.trim() !== q) input.value = q;
+  }, [q]);
 
   function onNameChange(value: string) {
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => { update("q", value.trim()); }, 30);
+    timer.current = setTimeout(() => update("q", value.trim()), 300);
   }
 
   function update(key: string, value: string) {
@@ -54,7 +65,7 @@ export function SessionFilters({
 
   return (
     <div
-      className="mb-6 grid gap-3 sm:grid-cols-2"
+      className="mb-6 grid gap-3 sm:grid-cols-3"
       data-pending={isPending ? "" : undefined}
       style={{ opacity: isPending ? 0.6 : 1 }}
     >
@@ -64,7 +75,9 @@ export function SessionFilters({
         </label>
         <Input
           id="filter-name"
-          value={searchParams.get("q") ?? ""}
+          type="search"
+          ref={nameInput}
+          defaultValue={q}
           onChange={(e) => onNameChange(e.target.value)}
         />
       </div>

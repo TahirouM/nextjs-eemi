@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from "react";
 /*
   `Link` vient de `@/i18n/routing`, pas de `next/link` : il préfixe
   automatiquement la locale courante. Avec `next/link`, un `href="/dashboard"`
@@ -200,7 +200,8 @@ export function Field({
 const controlBase =
   "w-full rounded-lg border border-rule-strong bg-surface-solid/70 px-3 py-2 text-sm text-ink outline-none transition-colors duration-150 hover:border-ink-soft focus:border-accent focus:bg-surface-solid";
 
-export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
+/** `ComponentProps` (avec `ref`) : React 19 transmet la ref comme une prop. */
+export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx(controlBase, className)} {...props} />;
 }
 
